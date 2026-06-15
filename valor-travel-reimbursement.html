@@ -678,7 +678,7 @@ body {
 }
 .cert p { font-size: 13px; color: var(--warm-grey); line-height: 1.7; margin-bottom: 14px; }
 .cert-check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
-.cert-check input { display: none; }
+.cert-check input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
 .cert-box-check {
   width: 18px; height: 18px;
   border-radius: 4px;
@@ -1826,8 +1826,8 @@ body {
     <div class="card-inner">
       <div class="cert">
         <p>By submitting, I confirm all expenses are accurate, tournament-related, and comply with the Virginia Valor FC Travel Reimbursement Policy. I understand non-compliant expenses will not be reimbursed and no additional submissions will be accepted.</p>
-        <label class="cert-check" onclick="toggleCert()">
-          <input type="checkbox" id="certChk">
+        <label class="cert-check">
+          <input type="checkbox" id="certChk" onchange="toggleCert()">
           <div class="cert-box-check" id="certVisual"><div class="cert-checkmark"></div></div>
           <span>I've read the policy and confirm all information and receipts in this submission are complete and accurate.</span>
         </label>
@@ -2114,7 +2114,7 @@ function checkedExpenses() {
 }
 
 // ─── FILE HANDLING ───────────────────────────────────────────────────────────
-const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwY_h_HB3ZeqNZFOQHBdB8_q26Ar9iH0PFQ7kPFZQx4KhoY5JSdnYDmvtr8qeeJO0PE/exec';
 
 let uploadedFiles = []; // array of File objects
 
@@ -2172,7 +2172,7 @@ uz.addEventListener('drop', e => {
 
 // ─── CERT ────────────────────────────────────────────────────────────────────
 function toggleCert() {
-  certified = !certified;
+  certified = document.getElementById('certChk').checked;
   const vis = document.getElementById('certVisual');
   vis.classList.toggle('checked', certified);
   document.getElementById('submitBtn').disabled = !certified;
@@ -2353,7 +2353,7 @@ function toggleSecondTeam(card) {
 // In Google Sheets: File → Share → Publish to web → choose "Submissions" tab → CSV
 // Then convert the URL to the gviz format:
 // https://docs.google.com/spreadsheets/d/SHEET_ID/gviz/tq?tqx=out:csv&sheet=Submissions
-const STATUS_CSV_URL = 'PASTE_SUBMISSIONS_TAB_GVIZ_CSV_URL_HERE';
+const STATUS_CSV_URL = 'https://docs.google.com/spreadsheets/d/1qznX97S9iN9mr5lL1dOHhGQobMGF0nHUikJ6UxRzZFw/gviz/tq?tqx=out:csv&sheet=Submissions';
 
 // Sheet column indices (0-based) matching the backend logging order:
 // Ref, Timestamp, Status, First Name, Last Name, Email, Primary Team, Second Team,
@@ -2682,6 +2682,60 @@ async function doSubmit(payload) {
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 loadTournaments();
+
+// ─── COACH IDENTITY PREFILL ──────────────────────────────────────────────────
+// Matches the Coaches Corner dashboard contract.
+// Priority: 1) postMessage from Wix parent  2) ?email=/?firstName=/?name=/?lastName= URL param
+// Always falls back to manual entry, so the tool works standalone too.
+function getQ() {
+  try { return new URLSearchParams(window.location.search); }
+  catch (e) { return new URLSearchParams(''); }
+}
+
+function seedField(id, val) {
+  if (!val) return;
+  var el = document.getElementById(id);
+  if (el && !el.value) { el.value = String(val).trim(); }
+}
+
+function prefillIdentity(d) {
+  if (!d) return;
+  var first = d.firstName || d.name || '';
+  var last  = d.lastName  || '';
+  var email = d.email     || '';
+  seedField('firstName', first);
+  seedField('lastName',  last);
+  seedField('email',     email);
+  // Seed the lookup boxes so "My Submissions" / "Revise" are one tap from the dashboard.
+  seedField('statusEmailInput', email);
+  seedField('reviseEmailInput', email);
+}
+
+(function initIdentity() {
+  // URL params (works even without Wix, e.g. a direct ?email= link)
+  var q = getQ();
+  prefillIdentity({
+    firstName: q.get('firstName'),
+    name:      q.get('name'),
+    lastName:  q.get('lastName'),
+    email:     q.get('email')
+  });
+
+  // Wix parent (Velo) hands over the logged-in member's details.
+  window.addEventListener('message', function (event) {
+    var d = event && event.data;
+    if (d && typeof d === 'object' && (d.email || d.firstName || d.name)) {
+      prefillIdentity(d);
+    }
+  });
+
+  // Tell the parent the iframe is loaded so it can post the member info.
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage('tool-ready', '*');
+    }
+  } catch (e) { /* not embedded, ignore */ }
+})();
 </script>
 <!-- ══ STATUS MODAL ════════════════════════════════════════ -->
 <div class="modal-overlay" id="statusOverlay" onclick="if(event.target===this)closeStatusModal()">
