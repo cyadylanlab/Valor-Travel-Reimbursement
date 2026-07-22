@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reimbursement Approvals | Virginia Valor FC</title>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#A39964; --gold-deep:#7A7040; --gold-light:#C4B882;
+  --gold-tint:rgba(163,153,100,0.09); --border-gold:rgba(163,153,100,0.45);
+  --black:#1A1A1A; --ink:#1F1E1C; --ink-soft:#55504A;
+  --warm-grey:#6B6560; --mid-grey:#B0AAA9;
+  --page-bg:#F0EDE8; --card:#FFF; --card-inner:#F7F5F2;
+  --border:#E0DDD8; --border-soft:#ECEAE6;
+  --red:#8B2020; --red-tint:rgba(139,32,32,0.08);
+  --green:#1E5C35; --green-tint:rgba(30,92,53,0.09);
+  --amber:#8A6D1F; --amber-tint:rgba(138,109,31,0.10);
+  --font-d:'Oswald',sans-serif; --font-b:'Barlow',sans-serif; --font-c:'Barlow Condensed',sans-serif;
+}
+body{background:var(--page-bg);color:var(--ink);font-family:var(--font-b);font-size:16px;line-height:1.6;-webkit-text-size-adjust:100%}
+
+/* HEADER */
+.hdr{background:linear-gradient(180deg,#232322,var(--black));padding:11px 22px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:60;border-bottom:3px solid var(--gold)}
+.hdr-crest{width:44px;height:44px;object-fit:contain;flex-shrink:0}
+.hdr-name{font-family:var(--font-d);font-size:12px;font-weight:600;letter-spacing:.14em;color:#FFF;line-height:1.25;max-width:100px}
+.hdr-page{font-family:var(--font-d);font-size:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-light);padding-left:18px;border-left:1px solid rgba(255,255,255,.12)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.hdr-user{font-size:13px;color:rgba(255,255,255,.5);font-family:var(--font-c);letter-spacing:.06em;text-transform:uppercase}
+.btn-refresh{background:transparent;border:1.5px solid rgba(255,255,255,.22);border-radius:7px;color:#E8E4DC;font-family:var(--font-c);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px;min-height:42px;cursor:pointer}
+.btn-refresh:hover{border-color:var(--gold);color:var(--gold-light)}
+
+/* TABS */
+.tabs{background:var(--card);border-bottom:1px solid var(--border);padding:0 22px;display:flex;gap:2px;position:sticky;top:69px;z-index:50;overflow-x:auto}
+.tab{background:none;border:none;border-bottom:3px solid transparent;font-family:var(--font-c);font-size:14px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--warm-grey);padding:15px 16px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.tab:hover{color:var(--ink)}
+.tab.on{color:var(--black);border-bottom-color:var(--gold)}
+.tab-count{background:var(--border);color:var(--ink);border-radius:11px;font-size:12px;font-weight:700;padding:2px 8px;min-width:22px;text-align:center}
+.tab.on .tab-count{background:var(--gold);color:var(--black)}
+
+.wrap{max-width:1180px;margin:0 auto;padding:22px 20px 80px}
+.bar{font-family:var(--font-c);font-size:14px;letter-spacing:.06em;color:var(--warm-grey);padding:10px 0;display:flex;align-items:center;gap:9px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+
+/* QUEUE */
+.q-card{background:var(--card);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:11px;padding:18px 20px;margin-bottom:13px;cursor:pointer;transition:box-shadow .15s,transform .1s}
+.q-card:hover{box-shadow:0 5px 18px rgba(0,0,0,.09);transform:translateY(-1px)}
+.q-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:9px}
+.q-coach{font-family:var(--font-d);font-size:20px;font-weight:600;color:var(--black);line-height:1.2}
+.q-meta{font-size:14px;color:var(--warm-grey);margin-top:3px}
+.q-body{display:flex;flex-wrap:wrap;gap:9px 22px;font-size:15px;color:var(--ink-soft);padding-top:10px;border-top:1px solid var(--border-soft)}
+.q-body b{color:var(--black);font-weight:600}
+.pill{font-family:var(--font-c);font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:6px 11px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.p-pending{background:var(--amber-tint);color:var(--amber);border:1px solid rgba(138,109,31,.3)}
+.p-approved{background:var(--green-tint);color:var(--green);border:1px solid rgba(30,92,53,.3)}
+.p-denied{background:var(--red-tint);color:var(--red);border:1px solid rgba(139,32,32,.3)}
+.p-revised{background:var(--gold-tint);color:var(--gold-deep);border:1px solid var(--border-gold)}
+.p-late{background:var(--red-tint);color:var(--red);border:1px solid rgba(139,32,32,.3)}
+.empty{text-align:center;padding:56px 20px;color:var(--warm-grey);font-size:16px}
+
+/* DETAIL */
+.back-link{background:none;border:none;font-family:var(--font-c);font-size:14px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--warm-grey);cursor:pointer;padding:9px 0;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.back-link:hover{color:var(--black)}
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:11px;overflow:hidden}
+.panel-h{font-family:var(--font-d);font-size:15px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--black);padding:15px 19px;border-bottom:1px solid var(--border);background:var(--card-inner)}
+.panel-b{padding:19px}
+.kv{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid var(--border-soft);font-size:15px}
+.kv:last-child{border-bottom:none}
+.kv span:first-child{color:var(--warm-grey);white-space:nowrap}
+.kv span:last-child{font-weight:600;text-align:right;color:var(--black)}
+.note-box{background:var(--card-inner);border-radius:8px;padding:13px 15px;font-size:15px;line-height:1.6;margin-top:12px}
+.note-box strong{display:block;font-family:var(--font-c);font-size:12px;letter-spacing:.11em;text-transform:uppercase;color:var(--warm-grey);margin-bottom:5px}
+.pdf-link{display:flex;align-items:center;justify-content:center;gap:9px;background:var(--black);color:var(--gold-light);text-decoration:none;border-radius:9px;font-family:var(--font-c);font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:15px;margin-top:14px}
+.pdf-link:hover{background:#2b2a29}
+
+/* ITEMIZER */
+.sec{margin-bottom:22px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-family:var(--font-d);font-size:15px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--black);padding-bottom:7px;margin-bottom:11px;border-bottom:2px solid var(--gold)}
+.sec-cap{font-family:var(--font-c);font-size:13px;font-weight:600;letter-spacing:.05em;color:var(--warm-grey);text-transform:none}
+.li{display:flex;gap:9px;margin-bottom:9px;align-items:center}
+.li input[type=text]{flex:1;min-width:0}
+.li input[type=number]{width:112px;flex-shrink:0;text-align:right}
+input,textarea{font-family:var(--font-b);font-size:16px;color:var(--ink);background:#FCFBFA;border:1.5px solid var(--border);border-radius:8px;padding:12px 13px;min-height:48px;width:100%}
+input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-tint)}
+input::placeholder{color:var(--mid-grey)}
+textarea{min-height:88px;line-height:1.55;resize:vertical}
+.li-rm{background:none;border:1.5px solid var(--border);border-radius:8px;color:var(--warm-grey);width:44px;height:48px;flex-shrink:0;cursor:pointer;font-size:17px}
+.li-rm:hover{border-color:var(--red);color:var(--red);background:var(--red-tint)}
+.add-li{background:none;border:1.5px dashed var(--border);border-radius:8px;color:var(--gold-deep);font-family:var(--font-c);font-size:13px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:11px;width:100%;min-height:46px;cursor:pointer}
+.add-li:hover{border-color:var(--gold);background:var(--gold-tint)}
+.sub-row{display:flex;justify-content:space-between;font-size:15px;padding-top:10px;margin-top:4px;border-top:1px solid var(--border-soft);color:var(--warm-grey)}
+.sub-row b{color:var(--black);font-size:17px}
+.warnbox{border-radius:8px;padding:11px 13px;font-size:14px;line-height:1.55;margin-top:10px;display:none}
+.warnbox.on{display:block}
+.warnbox.over{background:var(--red-tint);border-left:4px solid var(--red);color:var(--red)}
+.warnbox.ok{background:var(--green-tint);border-left:4px solid var(--green);color:var(--green)}
+.total-box{background:var(--black);border-radius:11px;padding:19px 21px;display:flex;justify-content:space-between;align-items:center;gap:14px;margin:22px 0}
+.total-box-l{font-family:var(--font-c);font-size:14px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--gold)}
+.total-box-v{font-family:var(--font-d);font-size:34px;font-weight:600;color:#FFF;line-height:1}
+.fld{margin-bottom:15px}
+.fld label{display:block;font-family:var(--font-c);font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--warm-grey);margin-bottom:7px}
+.act-row{display:flex;gap:11px;flex-wrap:wrap;margin-top:6px}
+.btn{border:none;border-radius:9px;font-family:var(--font-c);font-size:15px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:16px 22px;min-height:56px;cursor:pointer;flex:1;min-width:170px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-approve{background:var(--gold);color:var(--black)}
+.btn-approve:hover:not(:disabled){background:var(--gold-light)}
+.btn-revise{background:transparent;border:1.5px solid var(--gold);color:var(--gold-deep)}
+.btn-revise:hover:not(:disabled){background:var(--gold-tint)}
+.btn-deny{background:transparent;border:1.5px solid var(--border);color:var(--warm-grey)}
+.btn-deny:hover:not(:disabled){border-color:var(--red);color:var(--red);background:var(--red-tint)}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--warm-grey);flex:0 0 auto;min-width:0}
+
+.status-msg{border-radius:9px;padding:14px 16px;font-size:15px;line-height:1.6;margin-top:14px;display:none}
+.status-msg.on{display:block}
+.status-msg.work{background:var(--gold-tint);border:1px solid var(--border-gold);color:var(--gold-deep)}
+.status-msg.good{background:var(--green-tint);border:1px solid rgba(30,92,53,.3);color:var(--green)}
+.status-msg.bad{background:var(--red-tint);border:1px solid rgba(139,32,32,.3);color:var(--red)}
+
+.overlay{position:fixed;inset:0;background:rgba(20,20,20,.62);display:none;align-items:center;justify-content:center;padding:20px;z-index:100}
+.overlay.on{display:flex}
+.modal{background:var(--card);border-radius:13px;max-width:520px;width:100%;overflow:hidden}
+.modal-h{background:var(--black);color:#FFF;font-family:var(--font-d);font-size:17px;letter-spacing:.05em;text-transform:uppercase;padding:17px 20px;border-bottom:3px solid var(--gold)}
+.modal-b{padding:20px}
+
+@media(max-width:900px){
+  .d-grid{grid-template-columns:1fr}
+  .hdr{padding:9px 13px}
+  .hdr-page{display:none}
+  .tabs{top:64px;padding:0 12px}
+  .wrap{padding:18px 13px 70px}
+  .li{flex-wrap:wrap}
+  .li input[type=text]{flex:1 1 100%}
+  .li input[type=number]{flex:1;width:auto}
+  .btn{flex:1 1 100%}
+  .total-box-v{font-size:28px}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <img class="hdr-crest" id="crest" alt="Virginia Valor FC">
+  <div class="hdr-name">Virginia<br>Valor FC</div>
+  <div class="hdr-page">Reimbursement Approvals</div>
+  <div class="hdr-right">
+    <span class="hdr-user" id="hdrUser"></span>
+    <button class="btn-refresh" onclick="loadQueue(true)">Refresh</button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab on" data-f="Pending"  onclick="setFilter('Pending',this)">Pending <span class="tab-count" id="c-Pending">0</span></button>
+  <button class="tab" data-f="Approved"    onclick="setFilter('Approved',this)">Approved <span class="tab-count" id="c-Approved">0</span></button>
+  <button class="tab" data-f="Revision"    onclick="setFilter('Revision',this)">Revision Requested <span class="tab-count" id="c-Revision">0</span></button>
+  <button class="tab" data-f="Denied"      onclick="setFilter('Denied',this)">Denied <span class="tab-count" id="c-Denied">0</span></button>
+  <button class="tab" data-f="All"         onclick="setFilter('All',this)">All <span class="tab-count" id="c-All">0</span></button>
+</nav>
+
+<div class="wrap">
+  <div class="bar" id="bar"><div class="dot"></div> Loading submissions…</div>
+  <div id="queueView"></div>
+  <div id="detailView" style="display:none"></div>
+</div>
+
+<div class="overlay" id="confirmOverlay" onclick="if(event.target===this)closeConfirm()">
+  <div class="modal">
+    <div class="modal-h" id="confirmTitle">Confirm</div>
+    <div class="modal-b">
+      <p id="confirmMsg" style="font-size:15px;line-height:1.6;margin-bottom:15px"></p>
+      <div class="fld" id="confirmReasonWrap">
+        <label id="confirmReasonLabel">Reason sent to the coach</label>
+        <textarea id="confirmReason" placeholder="Explain what needs to change…"></textarea>
+      </div>
+      <div class="act-row">
+        <button class="btn btn-approve" id="confirmGo">Confirm</button>
+        <button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   CONFIG — must match the coach-facing tool and the Apps Script backend
+   ═══════════════════════════════════════════════════════════════════════ */
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwY_h_HB3ZeqNZFOQHBdB8_q26Ar9iH0PFQ7kPFZQx4KhoY5JSdnYDmvtr8qeeJO0PE/exec';
+// The dashboard reads through APPS_SCRIPT_URL (?action=list) so the
+// Submissions sheet can stay private. No CSV URL needed.
+
+/* Columns are resolved from the sheet's HEADER ROW, not by position, so
+   reordering or renaming a column on the Submissions tab won't scramble
+   this view. FALLBACK is the order logRow_() writes if a header is absent. */
+const COL_ALIASES = {
+  ref:        ['ref','reference','ref #','reference number','id'],
+  timestamp:  ['timestamp','submitted','date submitted','submission date','time'],
+  status:     ['status','state'],
+  firstName:  ['first name','first','firstname'],
+  lastName:   ['last name','last','lastname','surname'],
+  email:      ['email','email address','coach email','e-mail'],
+  primaryTeam:['primary team','team','team 1','primary'],
+  secondTeam: ['second team','team 2','secondary team','additional team'],
+  tournament: ['tournament','tournament name','event','event name'],
+  tournDate:  ['tourn date','tournament date','date','event date','dates'],
+  tournLoc:   ['tourn location','location','tournament location','city','event location'],
+  tripDays:   ['trip length','trip days','days','nights','duration'],
+  hotelReq:   ['hotel required','hotel','hotel needed'],
+  expenses:   ['expense categories','expenses','categories','claimed'],
+  notes:      ['notes','coach notes','comments'],
+  specialReq: ['special request','special circumstances','special circumstances request'],
+  fileCount:  ['files received','files','file count','receipts'],
+  mergeNote:  ['skipped files','merge note','merge','receipt note','pages'],
+  driveLink:  ['drive link','link','receipt link','pdf','drive','receipt pdf'],
+  bethNotes:  ['beth notes','approver notes','admin notes','review notes']
+};
+const COL_FALLBACK = {
+  ref:0, timestamp:1, status:2, firstName:3, lastName:4, email:5,
+  primaryTeam:6, secondTeam:7, tournament:8, tournDate:9, tournLoc:10,
+  tripDays:11, hotelReq:12, expenses:13, notes:14, specialReq:15,
+  fileCount:16, mergeNote:17, driveLink:18, bethNotes:19
+};
+let COL = Object.assign({}, COL_FALLBACK);
+let COL_UNMATCHED = [];
+
+function mapColumns(headerCells) {
+  const norm = s => String(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+  const heads = headerCells.map(norm);
+  const map = {}, missing = [];
+  for (const key in COL_ALIASES) {
+    let idx = -1;
+    for (const alias of COL_ALIASES[key]) {
+      idx = heads.indexOf(norm(alias));
+      if (idx > -1) break;
+    }
+    if (idx === -1) {                       // fall back to written position
+      idx = COL_FALLBACK[key];
+      missing.push(key);
+    }
+    map[key] = idx;
+  }
+  COL = map;
+  COL_UNMATCHED = missing;
+}
+
+/* Policy caps, straight from the 2026-27 policy document. */
+const POLICY = {
+  mealPerDay:45,
+  mealCapByDays:{'1':35,'2':90,'3':135},
+  gasFar:100,          // 90+ miles
+  gasNear:50,          // 60-90 miles, and same-day 90+ trips
+  submitWindowDays:7
+};
+
+let rows=[], filter='Pending', current=null, lineIds=0;
+
+/* ─── LOAD ──────────────────────────────────────────────────────────── */
+async function fetchCsv(url){
+  const routes=[url,'https://corsproxy.io/?'+encodeURIComponent(url),
+                'https://api.allorigins.win/raw?url='+encodeURIComponent(url)];
+  for(const r of routes){
+    try{ const res=await fetch(r); if(!res.ok) continue;
+      const t=await res.text(); if(t && t.indexOf(',')>-1) return t; }catch(_){}
+  }
+  throw new Error('Could not reach the submissions sheet');
+}
+function splitLine(l){const o=[];let c='',q=false;
+  for(let i=0;i<l.length;i++){const ch=l[i];
+    if(ch==='"'){q=!q}else if(ch===','&&!q){o.push(c);c=''}else{c+=ch}}
+  o.push(c);return o;}
+
+async function loadQueue(force){
+  const bar=document.getElementById('bar');
+  bar.innerHTML='<div class="dot"></div> Loading submissions…';
+  bar.style.display='flex'; bar.style.color='';
+  try{
+    // Served by the Apps Script backend, which runs as the sheet owner.
+    // The Submissions sheet stays private.
+    const res=await fetch(APPS_SCRIPT_URL+'?action=list&_='+Date.now());
+    if(!res.ok) throw new Error('the backend returned HTTP '+res.status);
+    const out=await res.json();
+    if(!out.ok) throw new Error(out.error||'backend error');
+    if(!out.rows||out.rows.length<1) throw new Error('the Submissions sheet came back empty — not even a header row');
+
+    mapColumns(out.rows[0]);
+    rows=out.rows.slice(1).filter(r=>r[COL.ref]);
+    bar.style.display='none';
+    renderCounts(); renderQueue();
+
+    if(COL_UNMATCHED.length){
+      bar.style.display='flex'; bar.style.color='var(--amber)';
+      bar.innerHTML='Heads up — no header matched for: <b style="margin:0 4px">'+
+        COL_UNMATCHED.join(', ')+'</b>. Using the default position for those.';
+    }
+  }catch(e){
+    bar.style.display='flex'; bar.style.color='var(--red)';
+    bar.innerHTML='<strong>Could not load the queue.</strong> '+e.message+
+      '<br><span style="color:var(--warm-grey)">Most likely the Apps Script needs redeploying '+
+      '(Deploy &rarr; Manage deployments &rarr; New version) so the <code>list</code> endpoint exists. '+
+      'Check <a href="'+APPS_SCRIPT_URL+'?action=ping" target="_blank" style="color:var(--gold-deep)">'+
+      'the ping endpoint</a> — it should return ok:true.</span>';
+  }
+}
+
+function statusOf(r){
+  const s=(r[COL.status]||'Pending').trim();
+  return s||'Pending';
+}
+function renderCounts(){
+  const c={Pending:0,Approved:0,Revision:0,Denied:0,All:rows.length};
+  rows.forEach(r=>{const s=statusOf(r);
+    if(s==='Approved')c.Approved++;
+    else if(s==='Denied')c.Denied++;
+    else if(/revision/i.test(s))c.Revision++;
+    else c.Pending++;});
+  for(const k in c) document.getElementById('c-'+k).textContent=c[k];
+}
+function setFilter(f,el){
+  filter=f;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on'); renderQueue();
+}
+
+/* Days between submission and now — surfaces the 7-day rule */
+function daysSince(ts){
+  const d=new Date(ts); if(isNaN(d)) return null;
+  return Math.floor((Date.now()-d.getTime())/86400000);
+}
+function fmtWhen(raw){
+  const d=new Date(raw); if(isNaN(d)) return raw||'—';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+
+         ' at '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+
+function renderQueue(){
+  document.getElementById('detailView').style.display='none';
+  const v=document.getElementById('queueView');
+  v.style.display='';
+  let list=rows.filter(r=>{
+    const s=statusOf(r);
+    if(filter==='All')return true;
+    if(filter==='Approved')return s==='Approved';
+    if(filter==='Denied')return s==='Denied';
+    if(filter==='Revision')return /revision/i.test(s);
+    return s!=='Approved'&&s!=='Denied'&&!/revision/i.test(s);
+  });
+  list.sort((a,b)=>new Date(b[COL.timestamp])-new Date(a[COL.timestamp]));
+
+  if(!list.length){
+    v.innerHTML='<div class="empty">Nothing in this queue right now.</div>';
+    return;
+  }
+  v.innerHTML=list.map(r=>{
+    const s=statusOf(r);
+    const cls=s==='Approved'?'p-approved':s==='Denied'?'p-denied':/revision/i.test(s)?'p-revised':'p-pending';
+    const age=daysSince(r[COL.timestamp]);
+    const late=(age!==null&&age>POLICY.submitWindowDays&&s!=='Approved')
+      ? `<span class="pill p-late">${age} days old</span>`:'';
+    const i=rows.indexOf(r);
+    return `<div class="q-card" onclick="openDetail(${i})">
+      <div class="q-top">
+        <div>
+          <div class="q-coach">${esc(r[COL.firstName])} ${esc(r[COL.lastName])}</div>
+          <div class="q-meta">${esc(r[COL.tournament])||'—'} &middot; Ref ${esc(r[COL.ref])}</div>
+        </div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end">
+          ${late}<span class="pill ${cls}">${esc(s)}</span>
+        </div>
+      </div>
+      <div class="q-body">
+        <div><b>Team:</b> ${esc(r[COL.primaryTeam])||'—'}${r[COL.secondTeam]?' + '+esc(r[COL.secondTeam]):''}</div>
+        <div><b>Expenses:</b> ${esc(r[COL.expenses])||'—'}</div>
+        <div><b>Submitted:</b> ${fmtWhen(r[COL.timestamp])}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ─── DETAIL + ITEMIZER ─────────────────────────────────────────────── */
+function openDetail(i){
+  current=rows[i];
+  document.getElementById('queueView').style.display='none';
+  const v=document.getElementById('detailView');
+  v.style.display='';
+  const r=current, s=statusOf(r);
+  const age=daysSince(r[COL.timestamp]);
+  const days=r[COL.tripDays]||'';
+  const mealCap=POLICY.mealCapByDays[days]||null;
+
+  v.innerHTML=`
+  <button class="back-link" onclick="renderQueue()">&larr; Back to queue</button>
+  <div class="d-grid">
+
+    <div class="panel">
+      <div class="panel-h">Submission &middot; ${esc(r[COL.ref])}</div>
+      <div class="panel-b">
+        <div class="kv"><span>Coach</span><span>${esc(r[COL.firstName])} ${esc(r[COL.lastName])}</span></div>
+        <div class="kv"><span>Email</span><span>${esc(r[COL.email])}</span></div>
+        <div class="kv"><span>Team</span><span>${esc(r[COL.primaryTeam])}${r[COL.secondTeam]?' + '+esc(r[COL.secondTeam]):''}</span></div>
+        <div class="kv"><span>Tournament</span><span>${esc(r[COL.tournament])}</span></div>
+        <div class="kv"><span>Date / location</span><span>${esc(r[COL.tournDate])} ${r[COL.tournLoc]?'&middot; '+esc(r[COL.tournLoc]):''}</span></div>
+        <div class="kv"><span>Trip length</span><span>${esc(days)||'—'} day(s)</span></div>
+        <div class="kv"><span>Hotel required</span><span>${esc(r[COL.hotelReq])||'—'}</span></div>
+        <div class="kv"><span>Claimed categories</span><span>${esc(r[COL.expenses])||'—'}</span></div>
+        <div class="kv"><span>Submitted</span><span>${fmtWhen(r[COL.timestamp])}</span></div>
+        <div class="kv"><span>Status</span><span>${esc(s)}</span></div>
+        ${age!==null&&age>POLICY.submitWindowDays?
+          `<div class="warnbox over on" style="margin-top:12px">Submitted ${age} days after the event was logged &mdash; the policy window is ${POLICY.submitWindowDays} days.</div>`:''}
+        ${r[COL.notes]?`<div class="note-box"><strong>Coach notes</strong>${esc(r[COL.notes])}</div>`:''}
+        ${r[COL.specialReq]?`<div class="note-box" style="background:var(--gold-tint);border:1px solid var(--border-gold)"><strong>Special circumstances request</strong>${esc(r[COL.specialReq])}</div>`:''}
+        ${r[COL.driveLink]?`<a class="pdf-link" href="${esc(r[COL.driveLink])}" target="_blank">Open receipt PDF</a>`:
+          '<div class="warnbox over on">No receipt PDF link on this row.</div>'}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">Calculate Reimbursement</div>
+      <div class="panel-b">
+
+        <div class="sec">
+          <div class="sec-h">Hotel <span class="sec-cap">itemized folio required</span></div>
+          <div id="rows-hotel"></div>
+          <button class="add-li" onclick="addLine('hotel')">+ Add hotel night</button>
+          <div class="sub-row"><span>Hotel subtotal</span><b id="sub-hotel">$0.00</b></div>
+        </div>
+
+        <div class="sec">
+          <div class="sec-h">Food <span class="sec-cap">$${POLICY.mealPerDay}/day${mealCap?' &middot; cap $'+mealCap:''}</span></div>
+          <div id="rows-meals"></div>
+          <button class="add-li" onclick="addLine('meals')">+ Add meal receipt</button>
+          <div class="sub-row"><span>Food subtotal</span><b id="sub-meals">$0.00</b></div>
+          <div class="warnbox" id="warn-meals"></div>
+        </div>
+
+        <div class="sec">
+          <div class="sec-h">Gas <span class="sec-cap">up to $100 / $50</span></div>
+          <div id="rows-gas"></div>
+          <button class="add-li" onclick="addLine('gas')">+ Add gas receipt</button>
+          <div class="sub-row"><span>Gas subtotal</span><b id="sub-gas">$0.00</b></div>
+          <div class="warnbox" id="warn-gas"></div>
+        </div>
+
+        <div class="total-box">
+          <div class="total-box-l">Total for reimbursement</div>
+          <div class="total-box-v" id="grandTotal">$0.00</div>
+        </div>
+
+        <div class="fld">
+          <label>Make check payable to</label>
+          <input type="text" id="payee" value="${esc(r[COL.firstName]+' '+r[COL.lastName])}">
+        </div>
+        <div class="fld">
+          <label>Notes on the check request (visible to the coach and to Kim)</label>
+          <textarea id="reqNotes" placeholder="e.g. Alcohol of $18.40 deducted from Saturday dinner receipt."></textarea>
+        </div>
+
+        <div class="act-row">
+          <button class="btn btn-approve" id="btnApprove" onclick="approve()">Approve &amp; Build Packet</button>
+        </div>
+        <div class="act-row" style="margin-top:11px">
+          <button class="btn btn-revise" onclick="askRevision()">Request Revision</button>
+          <button class="btn btn-deny" onclick="askDeny()">Deny</button>
+        </div>
+
+        <div class="status-msg" id="actionMsg"></div>
+      </div>
+    </div>
+  </div>`;
+
+  ['hotel','meals','gas'].forEach(k=>{ addLine(k); addLine(k); });
+  recalc();
+}
+
+function addLine(kind){
+  const id=++lineIds;
+  const ph={hotel:'e.g. Hampton Inn Richmond — night of 3/6',
+            meals:'e.g. Sat 3/7 breakfast + dinner',
+            gas:'e.g. Shell — Ashland, VA'}[kind];
+  const d=document.createElement('div');
+  d.className='li'; d.id='li-'+id;
+  d.innerHTML=`<input type="text" placeholder="${ph}" data-k="${kind}" data-t="desc">
+    <input type="number" step="0.01" min="0" placeholder="0.00" data-k="${kind}" data-t="amt" oninput="recalc()">
+    <button class="li-rm" onclick="document.getElementById('li-${id}').remove();recalc()" title="Remove">&times;</button>`;
+  document.getElementById('rows-'+kind).appendChild(d);
+}
+
+function linesOf(kind){
+  return [...document.querySelectorAll(`[data-k="${kind}"][data-t="desc"]`)].map((el,i)=>{
+    const amt=document.querySelectorAll(`[data-k="${kind}"][data-t="amt"]`)[i];
+    return {desc:el.value.trim(), amt:parseFloat(amt.value)||0};
+  }).filter(l=>l.desc||l.amt);
+}
+const money=n=>'$'+n.toFixed(2);
+
+function recalc(){
+  const t={};
+  ['hotel','meals','gas'].forEach(k=>{
+    t[k]=linesOf(k).reduce((s,l)=>s+l.amt,0);
+    document.getElementById('sub-'+k).textContent=money(t[k]);
+  });
+  const grand=t.hotel+t.meals+t.gas;
+  document.getElementById('grandTotal').textContent=money(grand);
+
+  // Meal cap check against trip length
+  const days=current[COL.tripDays]||'';
+  const cap=POLICY.mealCapByDays[days];
+  const mw=document.getElementById('warn-meals');
+  if(cap && t.meals>0){
+    mw.classList.add('on');
+    if(t.meals>cap){
+      mw.className='warnbox over on';
+      mw.textContent=`Food is ${money(t.meals)} against a ${days}-day cap of ${money(cap)} — over by ${money(t.meals-cap)}. Reduce before approving.`;
+    }else{
+      mw.className='warnbox ok on';
+      mw.textContent=`Food ${money(t.meals)} is within the ${days}-day cap of ${money(cap)}.`;
+    }
+  }else{ mw.classList.remove('on'); }
+
+  // Gas cap — $100 for 90+ mi, $50 for 60-90 mi and same-day trips
+  const gw=document.getElementById('warn-gas');
+  const sameDay=String(days)==='1';
+  const gasCap=sameDay?POLICY.gasNear:POLICY.gasFar;
+  if(t.gas>0){
+    gw.classList.add('on');
+    if(t.gas>gasCap){
+      gw.className='warnbox over on';
+      gw.textContent=`Gas is ${money(t.gas)} against a cap of ${money(gasCap)}${sameDay?' (same-day trip)':''} — over by ${money(t.gas-gasCap)}.`;
+    }else{
+      gw.className='warnbox ok on';
+      gw.textContent=`Gas ${money(t.gas)} is within the ${money(gasCap)} cap.`;
+    }
+  }else{ gw.classList.remove('on'); }
+
+  document.getElementById('btnApprove').disabled = grand<=0;
+  return {t:t, grand:grand};
+}
+
+/* ─── CHECK REQUEST COVER SHEET ─────────────────────────────────────── */
+async function buildCoverSheet(d){
+  const {PDFDocument,StandardFonts,rgb}=PDFLib;
+  const doc=await PDFDocument.create();
+  const pg=doc.addPage([612,792]);
+  const B=await doc.embedFont(StandardFonts.HelveticaBold);
+  const R=await doc.embedFont(StandardFonts.Helvetica);
+  const gold=rgb(.639,.6,.392), black=rgb(.102,.102,.102),
+        grey=rgb(.42,.4,.376), line=rgb(.85,.84,.82), white=rgb(1,1,1);
+  const W=612;
+
+  pg.drawRectangle({x:0,y:792-76,width:W,height:76,color:black});
+  pg.drawRectangle({x:0,y:792-80,width:W,height:4,color:gold});
+  pg.drawText('VIRGINIA VALOR FC',{x:40,y:792-32,size:11,font:B,color:gold});
+  pg.drawText('Coaches Travel Reimbursement Check Request',{x:40,y:792-58,size:16,font:B,color:white});
+  const rt='REF '+d.ref;
+  pg.drawText(rt,{x:W-40-B.widthOfTextAtSize(rt,10),y:792-32,size:10,font:B,color:gold});
+
+  let y=792-108;
+  const field=(l,v)=>{
+    pg.drawText(l,{x:40,y:y,size:9,font:B,color:grey});
+    pg.drawText(String(v||''),{x:180,y:y,size:11,font:R,color:black});
+    pg.drawLine({start:{x:175,y:y-4},end:{x:W-40,y:y-4},thickness:.5,color:line});
+    y-=26;
+  };
+  field('TEAM NAME',d.team);
+  field('COACH',d.coach);
+  field('EVENT NAME AND DATE',d.event);
+  y-=10;
+
+  const section=(title,cap,rows)=>{
+    pg.drawRectangle({x:40,y:y-4,width:W-80,height:21,color:rgb(.96,.95,.94)});
+    pg.drawText(title,{x:47,y:y+2,size:10,font:B,color:black});
+    if(cap) pg.drawText(cap,{x:W-47-R.widthOfTextAtSize(cap,8),y:y+3,size:8,font:R,color:grey});
+    y-=23;
+    let sub=0;
+    if(!rows.length){
+      pg.drawText('None claimed',{x:53,y:y,size:10,font:R,color:grey}); y-=17;
+    }
+    rows.forEach(r=>{
+      let desc=r.desc||'(no description)';
+      while(R.widthOfTextAtSize(desc,10)>340) desc=desc.slice(0,-2);
+      pg.drawText(desc,{x:53,y:y,size:10,font:R,color:black});
+      const a=money(r.amt);
+      pg.drawText(a,{x:W-47-R.widthOfTextAtSize(a,10),y:y,size:10,font:R,color:black});
+      sub+=r.amt; y-=17;
+    });
+    pg.drawLine({start:{x:400,y:y+10},end:{x:W-47,y:y+10},thickness:.5,color:grey});
+    pg.drawText('Subtotal',{x:400,y:y-3,size:9,font:B,color:grey});
+    const s=money(sub);
+    pg.drawText(s,{x:W-47-B.widthOfTextAtSize(s,10),y:y-4,size:10,font:B,color:black});
+    y-=26;
+    return sub;
+  };
+
+  section('HOTEL','ITEMIZED FOLIO REQUIRED',d.hotel);
+  section('FOOD','UP TO $45 PER DAY',d.meals);
+  section('GAS','UP TO $100 / $50',d.gas);
+
+  pg.drawRectangle({x:40,y:y-26,width:W-80,height:36,color:black});
+  pg.drawText('TOTAL AMOUNT FOR REIMBURSEMENT',{x:52,y:y-13,size:11,font:B,color:gold});
+  const tt=money(d.total);
+  pg.drawText(tt,{x:W-52-B.widthOfTextAtSize(tt,16),y:y-16,size:16,font:B,color:white});
+  y-=52;
+
+  pg.drawText('NOTES',{x:40,y:y,size:9,font:B,color:grey}); y-=15;
+  const notes=(d.notes||'').trim()||'—';
+  let ln='', out=[];
+  notes.split(/\s+/).forEach(w=>{
+    if(R.widthOfTextAtSize(ln+' '+w,10)>W-90){out.push(ln);ln=w;}else{ln=ln?ln+' '+w:w;}
+  });
+  if(ln)out.push(ln);
+  out.slice(0,4).forEach(l=>{pg.drawText(l,{x:40,y:y,size:10,font:R,color:black});y-=15;});
+  y-=14;
+
+  pg.drawText('MAKE CHECK PAYABLE TO',{x:40,y:y,size:9,font:B,color:grey});
+  pg.drawText(String(d.payee||''),{x:210,y:y,size:12,font:B,color:black});
+  pg.drawLine({start:{x:205,y:y-4},end:{x:W-40,y:y-4},thickness:.5,color:line});
+  y-=34;
+
+  pg.drawLine({start:{x:40,y:y},end:{x:W-40,y:y},thickness:.5,color:line}); y-=16;
+  const appr='Approved by '+d.approver+' on '+d.approvedOn+
+             '   |   Receipts follow this page   |   '+d.pageNote;
+  pg.drawText(appr,{x:40,y:y,size:8,font:R,color:grey});
+
+  return doc;
+}
+
+/* ─── APPROVE: cover sheet + receipts → one packet ───────────────────── */
+async function approve(){
+  const {t,grand}=recalc();
+  const msg=document.getElementById('actionMsg');
+  const btn=document.getElementById('btnApprove');
+  const payee=document.getElementById('payee').value.trim();
+  if(!payee){ show(msg,'bad','Enter who the check should be made payable to.'); return; }
+
+  btn.disabled=true;
+  show(msg,'work','Fetching the receipt PDF…');
+
+  try{
+    // 1. Pull the coach's merged receipt PDF back from Drive via the backend
+    const res=await fetch(APPS_SCRIPT_URL+'?action=getPdf&ref='+encodeURIComponent(current[COL.ref]));
+    const got=await res.json();
+    if(!got.ok) throw new Error(got.error||'could not retrieve the receipt PDF');
+    const receiptBytes=Uint8Array.from(atob(got.data),c=>c.charCodeAt(0));
+
+    // 2. Build the check request cover sheet
+    show(msg,'work','Building the check request sheet…');
+    const d={
+      ref:current[COL.ref],
+      team:current[COL.primaryTeam]+(current[COL.secondTeam]?' + '+current[COL.secondTeam]:''),
+      coach:current[COL.firstName]+' '+current[COL.lastName],
+      event:current[COL.tournament]+(current[COL.tournDate]?' — '+current[COL.tournDate]:''),
+      hotel:linesOf('hotel'), meals:linesOf('meals'), gas:linesOf('gas'),
+      total:grand, payee:payee,
+      notes:document.getElementById('reqNotes').value,
+      approver:'Beth Morris',
+      approvedOn:new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
+      pageNote:''
+    };
+    const coverDoc=await buildCoverSheet(d);
+
+    // 3. Append the receipts behind it
+    show(msg,'work','Assembling the packet…');
+    const receiptDoc=await PDFLib.PDFDocument.load(receiptBytes,{ignoreEncryption:true});
+    const pages=await coverDoc.copyPages(receiptDoc,receiptDoc.getPageIndices());
+    pages.forEach(p=>coverDoc.addPage(p));
+    coverDoc.setTitle('Virginia Valor FC — Check Request '+d.ref);
+    const packet=await coverDoc.save({useObjectStreams:true});
+
+    // 4. Send it back to be filed for the accountant
+    show(msg,'work','Filing the approved packet…');
+    const payload={
+      action:'approve',
+      ref:current[COL.ref],
+      email:current[COL.email],
+      coachName:d.coach,
+      tournament:current[COL.tournament],
+      payee:payee,
+      notes:d.notes,
+      hotelTotal:t.hotel, mealTotal:t.meals, gasTotal:t.gas, grandTotal:grand,
+      lineItems:JSON.stringify({hotel:d.hotel,meals:d.meals,gas:d.gas}),
+      packetPdf:{ name:'VVFC-CheckRequest_'+d.ref+'.pdf',
+                  mimeType:'application/pdf',
+                  data:u8ToB64(packet) },
+      pageCount:coverDoc.getPageCount()
+    };
+    const post=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)});
+    const out=await post.json();
+    if(!out.ok) throw new Error(out.error||'backend rejected the packet');
+
+    show(msg,'good',
+      `Approved. A ${coverDoc.getPageCount()}-page packet (check request + receipts, ${money(grand)}) `+
+      `was filed for accounting and the coach has been emailed. `+
+      (out.driveLink?`<a href="${out.driveLink}" target="_blank" style="color:inherit;font-weight:700">Open the packet</a>`:''));
+    setTimeout(()=>loadQueue(true),2200);
+
+  }catch(e){
+    btn.disabled=false;
+    show(msg,'bad','Could not complete the approval: '+e.message+
+      '<br><br>Nothing was filed and the submission is still pending, so you can safely retry.');
+  }
+}
+
+function u8ToB64(u8){let s='',c=0x8000;
+  for(let i=0;i<u8.length;i+=c)s+=String.fromCharCode.apply(null,u8.subarray(i,i+c));
+  return btoa(s);}
+function show(el,cls,html){el.className='status-msg on '+cls;el.innerHTML=html;}
+
+/* ─── REVISION / DENY ───────────────────────────────────────────────── */
+let pendingAction=null;
+function askRevision(){
+  pendingAction='revision';
+  document.getElementById('confirmTitle').textContent='Request a Revision';
+  document.getElementById('confirmMsg').textContent=
+    'The coach will be emailed and can resubmit against this same reference. Nothing is filed for accounting.';
+  document.getElementById('confirmReasonLabel').textContent='What does the coach need to fix?';
+  document.getElementById('confirmReason').value='';
+  document.getElementById('confirmReasonWrap').style.display='';
+  document.getElementById('confirmGo').textContent='Send Revision Request';
+  document.getElementById('confirmGo').onclick=()=>doSimple('Revision Requested');
+  document.getElementById('confirmOverlay').classList.add('on');
+}
+function askDeny(){
+  pendingAction='deny';
+  document.getElementById('confirmTitle').textContent='Deny This Request';
+  document.getElementById('confirmMsg').textContent=
+    'The coach will be emailed with your reason. This closes the request.';
+  document.getElementById('confirmReasonLabel').textContent='Reason for denial';
+  document.getElementById('confirmReason').value='';
+  document.getElementById('confirmReasonWrap').style.display='';
+  document.getElementById('confirmGo').textContent='Deny Request';
+  document.getElementById('confirmGo').onclick=()=>doSimple('Denied');
+  document.getElementById('confirmOverlay').classList.add('on');
+}
+function closeConfirm(){document.getElementById('confirmOverlay').classList.remove('on');}
+
+async function doSimple(status){
+  const reason=document.getElementById('confirmReason').value.trim();
+  if(!reason){ alert('Please give the coach a reason.'); return; }
+  const go=document.getElementById('confirmGo');
+  go.disabled=true; go.textContent='Sending…';
+  try{
+    const res=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+      action:'setStatus', ref:current[COL.ref], status:status,
+      reason:reason, email:current[COL.email],
+      coachName:current[COL.firstName]+' '+current[COL.lastName],
+      tournament:current[COL.tournament]
+    })});
+    const out=await res.json();
+    if(!out.ok) throw new Error(out.error||'failed');
+    closeConfirm();
+    show(document.getElementById('actionMsg'),'good',
+      status+' — the coach has been emailed.');
+    setTimeout(()=>loadQueue(true),1800);
+  }catch(e){
+    alert('Could not update: '+e.message);
+  }finally{ go.disabled=false; go.textContent='Confirm'; }
+}
+
+/* ─── INIT ──────────────────────────────────────────────────────────── */
+document.getElementById('crest').src='data:image/png;base64,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';
+loadQueue();
+</script>
+</body>
+</html>
