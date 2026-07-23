@@ -955,7 +955,7 @@ async function approve(){
       notes:d.notes,
       hotelTotal:t.hotel, mealTotal:t.meals, gasTotal:t.gas, grandTotal:grand,
       lineItems:JSON.stringify({hotel:d.hotel,meals:d.meals,gas:d.gas}),
-      packetPdf:{ name:'VVFC-CheckRequest_'+d.ref+'.pdf',
+      packetPdf:{ name:packetFileName(d),
                   mimeType:'application/pdf',
                   data:u8ToB64(packet) },
       pageCount:coverDoc.getPageCount()
@@ -975,6 +975,17 @@ async function approve(){
     show(msg,'bad','Could not complete the approval: '+e.message+
       '<br><br>Nothing was filed and the submission is still pending, so you can safely retry.');
   }
+}
+
+// Drive filenames lead with the coach's name so the folder sorts by coach.
+function packetFileName(d){
+  const clean = s => String(s||'').replace(/[^A-Za-z0-9]/g,'');
+  const last  = clean(current[COL.lastName]) || 'Coach';
+  const first = clean(current[COL.firstName]);
+  const who   = first ? last+'_'+first : last;
+  const t     = String(d.event||'Tournament').split('\u2014')[0]
+                  .replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  return who+' - Check Request - '+t+' - $'+d.total.toFixed(2)+' - '+d.ref+'.pdf';
 }
 
 function u8ToB64(u8){let s='',c=0x8000;
