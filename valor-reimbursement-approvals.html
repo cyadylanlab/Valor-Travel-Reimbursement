@@ -99,6 +99,16 @@ textarea{min-height:88px;line-height:1.55;resize:vertical}
 .warnbox.on{display:block}
 .warnbox.over{background:var(--red-tint);border-left:4px solid var(--red);color:var(--red)}
 .warnbox.ok{background:var(--green-tint);border-left:4px solid var(--green);color:var(--green)}
+.warn-fix{background:var(--red);border:none;border-radius:7px;color:#FFF;font-family:var(--font-c);
+  font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:9px 13px;
+  min-height:38px;cursor:pointer;margin-top:9px;display:block}
+.warn-fix:hover{background:#a12a2a}
+.adj-box{border-radius:9px;padding:13px 15px;margin-top:14px;font-size:14px;line-height:1.6;
+  background:var(--gold-tint);border:1px solid var(--border-gold);color:var(--gold-deep);display:none}
+.adj-box.on{display:block}
+.adj-row{display:flex;justify-content:space-between;gap:14px;padding:3px 0}
+.adj-row b{white-space:nowrap}
+.adj-diff{border-top:1px solid var(--border-gold);margin-top:6px;padding-top:7px;font-weight:700;color:var(--red)}
 .total-box{background:var(--black);border-radius:11px;padding:19px 21px;display:flex;justify-content:space-between;align-items:center;gap:14px;margin:22px 0}
 .total-box-l{font-family:var(--font-c);font-size:14px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--gold)}
 .total-box-v{font-family:var(--font-d);font-size:34px;font-weight:600;color:#FFF;line-height:1}
@@ -520,6 +530,8 @@ function openDetail(i){
           <div class="rc-wrap" id="rc-gas"></div>
         </div>
 
+        <div class="adj-box" id="adjBox"></div>
+
         <div class="total-box">
           <div class="total-box-l">Total for reimbursement</div>
           <div class="total-box-v" id="grandTotal">$0.00</div>
@@ -608,6 +620,22 @@ function linesOf(kind){
 }
 const money=n=>'$'+n.toFixed(2);
 
+/**
+ * Brings a category down to its policy cap. Trims from the last line upward so
+ * earlier (usually larger, better-documented) receipts stay whole.
+ */
+function capTo(kind, cap){
+  const amtEls=[...document.querySelectorAll(`[data-k="${kind}"][data-t="amt"]`)];
+  let over=amtEls.reduce((s,el)=>s+(parseFloat(el.value)||0),0)-cap;
+  for(let i=amtEls.length-1;i>=0 && over>0.004;i--){
+    const v=parseFloat(amtEls[i].value)||0;
+    const cut=Math.min(v,over);
+    amtEls[i].value=(v-cut).toFixed(2);
+    over-=cut;
+  }
+  recalc();
+}
+
 function recalc(){
   const t={};
   ['hotel','meals','gas'].forEach(k=>{
@@ -625,7 +653,8 @@ function recalc(){
     mw.classList.add('on');
     if(t.meals>cap){
       mw.className='warnbox over on';
-      mw.textContent=`Food is ${money(t.meals)} against a ${days}-day cap of ${money(cap)} — over by ${money(t.meals-cap)}. Reduce before approving.`;
+      mw.innerHTML=`Food is ${money(t.meals)} against a ${days}-day cap of ${money(cap)} — over by ${money(t.meals-cap)}.`+
+        `<button class="warn-fix" onclick="capTo('meals',${cap})">Reduce food to ${money(cap)}</button>`;
     }else{
       mw.className='warnbox ok on';
       mw.textContent=`Food ${money(t.meals)} is within the ${days}-day cap of ${money(cap)}.`;
@@ -640,12 +669,29 @@ function recalc(){
     gw.classList.add('on');
     if(t.gas>gasCap){
       gw.className='warnbox over on';
-      gw.textContent=`Gas is ${money(t.gas)} against a cap of ${money(gasCap)}${sameDay?' (same-day trip)':''} — over by ${money(t.gas-gasCap)}.`;
+      gw.innerHTML=`Gas is ${money(t.gas)} against a cap of ${money(gasCap)}${sameDay?' (same-day trip)':''} — over by ${money(t.gas-gasCap)}.`+
+        `<button class="warn-fix" onclick="capTo('gas',${gasCap})">Reduce gas to ${money(gasCap)}</button>`;
     }else{
       gw.className='warnbox ok on';
       gw.textContent=`Gas ${money(t.gas)} is within the ${money(gasCap)} cap.`;
     }
   }else{ gw.classList.remove('on'); }
+
+  // State explicitly what is changing against the coach's request
+  const box=document.getElementById('adjBox');
+  if(box){
+    const asked=parseFloat(current[COL.coachTotal])||0;
+    const diff=grand-asked;
+    if(asked>0 && Math.abs(diff)>0.004){
+      box.classList.add('on');
+      box.innerHTML=
+        `<div class="adj-row"><span>Coach requested</span><b>${money(asked)}</b></div>`+
+        `<div class="adj-row"><span>You are approving</span><b>${money(grand)}</b></div>`+
+        `<div class="adj-row adj-diff"><span>${diff<0?'Reduction':'Increase'}</span>`+
+        `<b>${diff<0?'\u2212':'+'}${money(Math.abs(diff))}</b></div>`+
+        `<div style="margin-top:8px;font-size:13px;">Add a note below so the coach knows why &mdash; it appears on the check request and in their email.</div>`;
+    } else { box.classList.remove('on'); }
+  }
 
   document.getElementById('btnApprove').disabled = grand<=0;
   return {t:t, grand:grand};
