@@ -1539,11 +1539,12 @@ input:focus, select:focus, textarea:focus {
   .elig-table-wrap { overflow-x: visible; }
 
   /* Sticky bottom nav so Next/Submit is always reachable */
+  /* Buttons sit at the end of the content, in normal flow. A sticky bar was
+     pinning them over the policy card and hiding the text behind it. */
   .nav-row {
-    position: sticky; bottom: 0; z-index: 40;
-    flex-direction: column-reverse; gap: 9px;
-    background: linear-gradient(180deg, rgba(240,237,232,0) 0%, var(--page-bg) 22%);
-    padding: 16px 0 14px; margin-bottom: -14px;
+    flex-direction: column-reverse; gap: 10px;
+    padding: 4px 0 0;
+    margin-top: 6px;
   }
   .btn-back, .btn-next, .btn-submit-final { width: 100%; justify-content: center; text-align: center; }
 
