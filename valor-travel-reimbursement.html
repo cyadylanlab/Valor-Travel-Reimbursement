@@ -1613,6 +1613,90 @@ input:focus, select:focus, textarea:focus {
 .pol-key-row:last-child { border-bottom: none; }
 .pol-key-row span:last-child { font-weight: 700; white-space: nowrap; color: var(--black); }
 
+
+/* ─── COACH ITEMIZED ENTRY ──────────────────────────────── */
+.item-rows { margin-top: 14px; }
+.item-row {
+  display: flex; gap: 9px; margin-bottom: 9px; align-items: center;
+}
+.item-row .item-desc { flex: 1; min-width: 0; }
+.item-row .item-amt  { width: 118px; flex-shrink: 0; text-align: right; }
+.item-row input {
+  font-size: 16px; min-height: 50px; padding: 12px 13px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  background: #FCFBFA; width: 100%; font-family: var(--font-b); color: var(--ink);
+}
+.item-row input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-tint); }
+.item-amt-wrap { position: relative; width: 118px; flex-shrink: 0; }
+.item-amt-wrap::before {
+  content: '$'; position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+  color: var(--warm-grey); font-size: 16px; z-index: 1; pointer-events: none;
+}
+.item-amt-wrap input { padding-left: 22px; text-align: right; }
+.item-rm {
+  background: none; border: 1.5px solid var(--border); border-radius: 8px;
+  color: var(--warm-grey); width: 46px; height: 50px; flex-shrink: 0;
+  cursor: pointer; font-size: 18px; line-height: 1;
+}
+.item-rm:hover { border-color: var(--red); color: var(--red); background: var(--red-tint); }
+.item-add {
+  background: none; border: 1.5px dashed var(--border); border-radius: 8px;
+  color: var(--gold-deep); font-family: var(--font-c); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase; padding: 11px; width: 100%;
+  min-height: 46px; cursor: pointer;
+}
+.item-add:hover { border-color: var(--gold); background: var(--gold-tint); }
+.item-sub {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding-top: 11px; margin-top: 4px; border-top: 1px solid var(--border-soft);
+  font-size: 15px; color: var(--warm-grey);
+}
+.item-sub b { color: var(--black); font-size: 18px; font-family: var(--font-d); }
+.item-warn {
+  border-radius: 8px; padding: 11px 13px; font-size: 14px; line-height: 1.55;
+  margin-top: 10px; display: none;
+}
+.item-warn.on { display: block; }
+.item-warn.over { background: var(--red-tint); border-left: 4px solid var(--red); color: var(--red); }
+.item-warn.ok   { background: var(--green-tint); border-left: 4px solid var(--green); color: var(--green); }
+
+.grand-box {
+  background: var(--black); border-radius: 12px; padding: 18px 20px;
+  display: flex; justify-content: space-between; align-items: center; gap: 14px;
+  margin-top: 20px;
+}
+.grand-box-l {
+  font-family: var(--font-c); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.11em; text-transform: uppercase; color: var(--gold);
+}
+.grand-box-v { font-family: var(--font-d); font-size: 30px; font-weight: 600; color: #FFF; line-height: 1; }
+
+
+/* ─── PER-CATEGORY RECEIPT ZONES ────────────────────────── */
+.cat-zone { margin-bottom: 20px; }
+.cat-zone-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  font-family: var(--font-d); font-size: 15px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--black);
+  padding-bottom: 7px; margin-bottom: 11px; border-bottom: 2px solid var(--gold);
+}
+.cat-zone-amt { font-family: var(--font-c); font-size: 14px; font-weight: 600; color: var(--warm-grey); letter-spacing: 0.04em; text-transform: none; }
+.cat-zone.missing .cat-zone-head { border-bottom-color: var(--red); }
+.cat-need {
+  background: var(--red-tint); border-left: 4px solid var(--red); border-radius: 8px;
+  padding: 10px 13px; font-size: 14px; color: var(--red); line-height: 1.5; margin-top: 9px;
+}
+.cat-chips { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; margin-top: 7px; padding-left: 2px; }
+.cat-chips-label { font-size: 13px; color: var(--warm-grey); }
+.cat-chip {
+  background: transparent; border: 1.5px solid var(--border); border-radius: 20px;
+  color: var(--warm-grey); font-family: var(--font-c); font-size: 12px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; padding: 6px 12px; min-height: 34px;
+  cursor: pointer;
+}
+.cat-chip:hover { border-color: var(--gold); color: var(--gold-deep); }
+.cat-chip.on { background: var(--gold); border-color: var(--gold); color: var(--black); }
+
 </style>
 </head>
 <body>
@@ -2026,13 +2110,20 @@ input:focus, select:focus, textarea:focus {
       <div class="exp-panel" id="ep-hotel">
         <div class="exp-panel-label">Hotel</div>
         <div class="note warn"><span class="note-icon">⚠</span> Stay at the same hotel as your team, same booking platform. Standard room only — in-room charges are not reimbursable. Itemized hotel folio required.</div>
+        <div class="item-rows" id="items-hotel"></div>
+        <button type="button" class="item-add" onclick="addItem('hotel')">+ Add a hotel charge</button>
+        <div class="item-sub"><span>Hotel total you're claiming</span><b id="sub-hotel">$0.00</b></div>
       </div>
 
       <!-- MEALS DETAIL -->
       <div class="exp-panel" id="ep-meals">
         <div class="exp-panel-label">Meals</div>
         <div class="note info"><span class="note-icon">ℹ</span> <span id="mealCapText">$45/day max. Select trip length on the previous step to confirm your cap.</span></div>
-        <div class="note warn" style="margin-top:8px;"><span class="note-icon">⚠</span> No alcohol, no meals eaten locally before departure or after return. Itemized receipts required.</div>
+        <div class="note warn" style="margin-top:8px;"><span class="note-icon">⚠</span> No alcohol, no meals eaten locally before departure or after return. Itemized receipts required. Enter the food total only — leave out any alcohol.</div>
+        <div class="item-rows" id="items-meals"></div>
+        <button type="button" class="item-add" onclick="addItem('meals')">+ Add a meal receipt</button>
+        <div class="item-sub"><span>Food total you're claiming</span><b id="sub-meals">$0.00</b></div>
+        <div class="item-warn" id="warn-meals"></div>
       </div>
 
       <!-- GAS DETAIL -->
@@ -2041,6 +2132,15 @@ input:focus, select:focus, textarea:focus {
         <div class="note ok" id="gasCapNote"><span class="note-icon">✓</span> <span id="gasCapText">Gas cap auto-loaded from your tournament selection.</span></div>
         <div class="note warn" style="margin-top:8px;"><span class="note-icon">⚠</span> Never transport players in your personal vehicle.</div>
         <div class="note warn" style="margin-top:8px;"><span class="note-icon">⚠</span> Tolls are <strong>not</strong> reimbursable. Do not include toll receipts — they will be excluded from your request.</div>
+        <div class="item-rows" id="items-gas"></div>
+        <button type="button" class="item-add" onclick="addItem('gas')">+ Add a gas receipt</button>
+        <div class="item-sub"><span>Gas total you're claiming</span><b id="sub-gas">$0.00</b></div>
+        <div class="item-warn" id="warn-gas"></div>
+      </div>
+
+      <div class="grand-box" id="grandBox" style="display:none;">
+        <div class="grand-box-l">Total you're requesting</div>
+        <div class="grand-box-v" id="grandTotal">$0.00</div>
       </div>
 
       <div class="divider"></div>
@@ -2063,19 +2163,12 @@ input:focus, select:focus, textarea:focus {
   <div class="step-heading">
     <div class="step-eyebrow">Step 4 of 5</div>
     <div class="step-title">Upload your receipts</div>
-    <div class="step-sub">Add all your receipts — photos, screenshots, or PDFs, any mix is fine. We'll combine them into one PDF for Beth automatically.</div>
+    <div class="step-sub">Add the receipts for each expense you're claiming. Photos, screenshots, or PDFs — any mix is fine. We'll combine them into one PDF for Beth, grouped in the same order as your amounts.</div>
   </div>
 
   <div class="card">
     <div class="card-inner">
-      <div class="upload-zone" id="uploadZone">
-        <input type="file" id="receiptFile" accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,application/pdf" multiple onchange="onFileSelect(this)">
-        <div class="uz-icon">📎</div>
-        <div class="uz-text"><strong>Tap to add receipts</strong> or drag files here</div>
-        <div class="uz-sub">Photos, screenshots, or PDFs — multiple files OK</div>
-      </div>
-
-      <div id="fileList" style="display:none;margin-top:12px;flex-direction:column;gap:6px;"></div>
+      <div id="uploadZones"></div>
 
       <div class="merge-status" id="mergeStatus">
         <div class="merge-spin"></div>
@@ -2575,8 +2668,93 @@ function toggleExp(type, card) {
   const chk = document.getElementById('chk-'+type);
   chk.checked = !chk.checked;
   const panel = document.getElementById('ep-'+type);
-  if(chk.checked){ card.classList.add('on'); panel.classList.add('on'); }
-  else { card.classList.remove('on'); panel.classList.remove('on'); }
+  if(chk.checked){
+    card.classList.add('on'); panel.classList.add('on');
+    if(!document.querySelector('#items-'+type+' .item-row')) addItem(type);
+  } else {
+    card.classList.remove('on'); panel.classList.remove('on');
+    document.getElementById('items-'+type).innerHTML = '';  // clear so it's not counted
+  }
+  recalcItems();
+}
+
+// ─── COACH ITEMIZED ENTRY ────────────────────────────────────────────────────
+let itemSeq = 0;
+const ITEM_PLACEHOLDER = {
+  hotel: 'e.g. Hampton Inn Richmond — night of 3/6',
+  meals: 'e.g. Sat 3/7 breakfast + dinner (food only)',
+  gas:   'e.g. Shell — Ashland, VA'
+};
+function addItem(type) {
+  const id = ++itemSeq;
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.id = 'item-'+id;
+  row.innerHTML =
+    '<input type="text" class="item-desc" placeholder="'+ITEM_PLACEHOLDER[type]+'">' +
+    '<div class="item-amt-wrap"><input type="number" class="item-amt" step="0.01" min="0" ' +
+      'inputmode="decimal" placeholder="0.00" oninput="recalcItems()"></div>' +
+    '<button type="button" class="item-rm" onclick="removeItem(\''+type+'\','+id+')" aria-label="Remove">&times;</button>';
+  document.getElementById('items-'+type).appendChild(row);
+}
+function removeItem(type, id) {
+  const el = document.getElementById('item-'+id);
+  if(el) el.remove();
+  // keep at least one row visible while the category is checked
+  if(document.getElementById('chk-'+type).checked &&
+     !document.querySelector('#items-'+type+' .item-row')) addItem(type);
+  recalcItems();
+}
+function itemsOf(type) {
+  return [...document.querySelectorAll('#items-'+type+' .item-row')].map(r => ({
+    desc: r.querySelector('.item-desc').value.trim(),
+    amt:  parseFloat(r.querySelector('.item-amt').value) || 0
+  })).filter(x => x.desc || x.amt);
+}
+const money = n => '$' + (Math.round(n*100)/100).toFixed(2);
+
+function recalcItems() {
+  const t = {};
+  ['hotel','meals','gas'].forEach(k => {
+    t[k] = document.getElementById('chk-'+k).checked
+      ? itemsOf(k).reduce((s,x)=>s+x.amt,0) : 0;
+    document.getElementById('sub-'+k).textContent = money(t[k]);
+  });
+
+  // Meal cap — from trip length
+  const mw = document.getElementById('warn-meals');
+  if(document.getElementById('chk-meals').checked && t.meals>0 && mealCap<9999){
+    mw.classList.add('on');
+    if(t.meals>mealCap){
+      mw.className='item-warn over on';
+      mw.innerHTML='Your food total of '+money(t.meals)+' is over the '+money(mealCap)+
+        ' cap for this trip. Beth can only approve up to '+money(mealCap)+'.';
+    } else {
+      mw.className='item-warn ok on';
+      mw.textContent='Within the '+money(mealCap)+' food cap for this trip.';
+    }
+  } else if(mw){ mw.classList.remove('on'); }
+
+  // Gas cap — from tournament
+  const gw = document.getElementById('warn-gas');
+  const gc = (typeof gasCap==='number' && gasCap>0) ? gasCap : 100;
+  if(document.getElementById('chk-gas').checked && t.gas>0){
+    gw.classList.add('on');
+    if(t.gas>gc){
+      gw.className='item-warn over on';
+      gw.innerHTML='Your gas total of '+money(t.gas)+' is over the '+money(gc)+
+        ' cap for this tournament. Beth can only approve up to '+money(gc)+'.';
+    } else {
+      gw.className='item-warn ok on';
+      gw.textContent='Within the '+money(gc)+' gas cap.';
+    }
+  } else if(gw){ gw.classList.remove('on'); }
+
+  const grand = t.hotel+t.meals+t.gas;
+  const box = document.getElementById('grandBox');
+  document.getElementById('grandTotal').textContent = money(grand);
+  box.style.display = grand>0 ? 'flex' : 'none';
+  return {t, grand};
 }
 
 // ─── MEAL / GAS CAPS ─────────────────────────────────────────────────────────
@@ -2603,64 +2781,137 @@ function checkedExpenses() {
 // ─── FILE HANDLING ───────────────────────────────────────────────────────────
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwY_h_HB3ZeqNZFOQHBdB8_q26Ar9iH0PFQ7kPFZQx4KhoY5JSdnYDmvtr8qeeJO0PE/exec';
 
-let uploadedFiles = []; // array of File objects
+// Each entry is { f: File, cats: ['hotel','meals',...] } — one receipt can
+// legitimately cover more than one category (a hotel folio with a restaurant
+// charge on it), so cats is a list rather than a single value.
+let uploadedFiles = [];
 
-function onFileSelect(input) {
+const CAT_LABEL = { hotel:'Hotel', meals:'Food', gas:'Gas' };
+const CAT_ORDER = ['hotel','meals','gas'];   // matches the check request sheet
+
+function filesFor(cat) { return uploadedFiles.filter(e => e.cats.includes(cat)); }
+
+// Files in check-request order, each appearing once even if multi-category.
+function orderedFiles() {
+  const seen = new Set(), out = [];
+  CAT_ORDER.forEach(c => filesFor(c).forEach(e => {
+    if (!seen.has(e)) { seen.add(e); out.push(e); }
+  }));
+  uploadedFiles.forEach(e => { if (!seen.has(e)) { seen.add(e); out.push(e); } });
+  return out;
+}
+
+function onFileSelect(input, cat) {
   if (!input.files || !input.files.length) return;
   Array.from(input.files).forEach(f => {
-    // Avoid duplicates by name+size
-    const dup = uploadedFiles.some(e => e.name === f.name && e.size === f.size);
-    if (!dup) uploadedFiles.push(f);
+    const existing = uploadedFiles.find(e => e.f.name === f.name && e.f.size === f.size);
+    if (existing) {
+      if (!existing.cats.includes(cat)) existing.cats.push(cat);
+    } else {
+      uploadedFiles.push({ f: f, cats: [cat] });
+    }
   });
-  // Reset input so same file can be re-added after removal
-  input.value = '';
-  renderFileList();
+  if (input.value !== undefined) input.value = '';
+  renderUploadZones();
   buildMergedPdf();
 }
 
-function renderFileList() {
-  const list = document.getElementById('fileList');
-  const zone = document.getElementById('uploadZone');
-  if (!uploadedFiles.length) {
-    list.style.display = 'none';
-    zone.style.display = '';
-    return;
+function toggleFileCat(idx, cat) {
+  const e = uploadedFiles[idx];
+  if (!e) return;
+  const i = e.cats.indexOf(cat);
+  if (i > -1) {
+    if (e.cats.length === 1) return;   // never leave a file covering nothing
+    e.cats.splice(i, 1);
+  } else {
+    e.cats.push(cat);
   }
-  zone.style.display = 'none';
-  list.style.display = 'flex';
-  list.innerHTML = uploadedFiles.map((f, i) => {
-    const isPdf = f.type === 'application/pdf';
-    const kb = Math.round(f.size / 1024);
-    const size = kb > 1024 ? (kb/1024).toFixed(1)+' MB' : kb+' KB';
-    return `<div class="file-item">
-      <div class="file-item-icon ${isPdf ? 'pdf' : 'img'}">${isPdf ? '📄' : '🖼️'}</div>
-      <span class="file-item-name">${f.name}</span>
-      <span class="file-item-size">${size}</span>
-      <button class="file-item-remove" onclick="removeFile(${i})" title="Remove">✕</button>
-    </div>`;
-  }).join('') +
-  `<button class="file-add-more" onclick="document.getElementById('receiptFile').click()">+ Add more receipts</button>`;
+  renderUploadZones();
+  buildMergedPdf();
 }
 
 function removeFile(idx) {
   uploadedFiles.splice(idx, 1);
   if (!uploadedFiles.length) {
-    document.getElementById('uploadZone').style.display = '';
     setMergeStatus('', false);
     document.getElementById('pdfPreviewBtn').classList.remove('on');
     mergedPdfBytes = null;
   }
-  renderFileList();
+  renderUploadZones();
   if (uploadedFiles.length) buildMergedPdf();
 }
 
-const uz = document.getElementById('uploadZone');
-uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('drag-over'); });
-uz.addEventListener('dragleave', () => uz.classList.remove('drag-over'));
-uz.addEventListener('drop', e => {
-  e.preventDefault(); uz.classList.remove('drag-over');
-  if (e.dataTransfer.files.length) onFileSelect({ files: e.dataTransfer.files });
-});
+function fmtSize(bytes) {
+  const kb = Math.round(bytes / 1024);
+  return kb > 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb + ' KB';
+}
+
+// One upload zone per claimed expense category.
+function renderUploadZones() {
+  const wrap = document.getElementById('uploadZones');
+  if (!wrap) return;
+  const claimed = checkedExpenses();
+
+  // Drop tags for categories since unchecked; drop files left covering nothing.
+  uploadedFiles.forEach(e => { e.cats = e.cats.filter(c => claimed.includes(c)); });
+  uploadedFiles = uploadedFiles.filter(e => e.cats.length);
+
+  if (!claimed.length) {
+    wrap.innerHTML = '<div class="note warn"><span class="note-icon">\u26a0</span> ' +
+      'Go back a step and choose what you are claiming first.</div>';
+    return;
+  }
+
+  wrap.innerHTML = claimed.map(cat => {
+    const mine = filesFor(cat);
+    const others = claimed.filter(c => c !== cat);
+    const rows = mine.map(e => {
+      const idx = uploadedFiles.indexOf(e);
+      const isPdf = e.f.type === 'application/pdf' || /\.pdf$/i.test(e.f.name);
+      const chips = others.length ? '<div class="cat-chips">' +
+        '<span class="cat-chips-label">Also covers:</span>' +
+        others.map(o => '<button type="button" class="cat-chip ' +
+          (e.cats.includes(o) ? 'on' : '') + '" onclick="toggleFileCat(' + idx +
+          ",'" + o + "')\">" + CAT_LABEL[o] + '</button>').join('') +
+        '</div>' : '';
+      return '<div style="margin-bottom:10px;">' +
+        '<div class="file-item">' +
+          '<div class="file-item-icon ' + (isPdf ? 'pdf' : 'img') + '">' + (isPdf ? '\ud83d\udcc4' : '\ud83d\uddbc\ufe0f') + '</div>' +
+          '<span class="file-item-name">' + e.f.name + '</span>' +
+          '<span class="file-item-size">' + fmtSize(e.f.size) + '</span>' +
+          '<button class="file-item-remove" onclick="removeFile(' + idx + ')" title="Remove">\u2715</button>' +
+        '</div>' + chips +
+      '</div>';
+    }).join('');
+
+    const picker = "document.getElementById('rf-" + cat + "').click()";
+    const zone = mine.length
+      ? '<button class="file-add-more" onclick="' + picker + '">+ Add another ' +
+        CAT_LABEL[cat].toLowerCase() + ' receipt</button>'
+      : '<div class="upload-zone" onclick="' + picker + '">' +
+          '<div class="uz-icon">\ud83d\udcce</div>' +
+          '<div class="uz-text"><strong>Add your ' + CAT_LABEL[cat].toLowerCase() +
+            ' receipt' + (cat === 'hotel' ? ' or folio' : '') + '</strong></div>' +
+          '<div class="uz-sub">Photo, screenshot, or PDF</div>' +
+        '</div>';
+
+    const claimedAmt = money(itemsOf(cat).reduce((s, x) => s + x.amt, 0));
+
+    return '<div class="cat-zone ' + (mine.length ? '' : 'missing') + '" id="cz-' + cat + '">' +
+      '<div class="cat-zone-head"><span>' + CAT_LABEL[cat] + ' receipts</span>' +
+      '<span class="cat-zone-amt">' + claimedAmt + ' claimed</span></div>' +
+      '<input type="file" id="rf-' + cat + '" style="display:none" ' +
+        'accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,application/pdf" ' +
+        'multiple onchange="onFileSelect(this,\'' + cat + '\')">' +
+      rows + zone +
+      (mine.length ? '' : '<div class="cat-need">An itemized ' + CAT_LABEL[cat].toLowerCase() +
+        ' receipt is required before you can continue.</div>') +
+    '</div>';
+  }).join('');
+}
+
+// Kept for existing call sites (e.g. startAnother)
+function renderFileList() { renderUploadZones(); }
 
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2730,9 +2981,12 @@ async function buildMergedPdf() {
     out.setProducer('Virginia Valor FC Reimbursement Tool');
     const skipped = [];
 
-    for (let i = 0; i < uploadedFiles.length; i++) {
-      const f = uploadedFiles[i];
-      setMergeStatus(`Combining receipts… (${i + 1} of ${uploadedFiles.length})`, true);
+    // Grouped in check-request order (hotel, food, gas) so the receipts line
+    // up with the amounts on the cover sheet.
+    const ordered = orderedFiles();
+    for (let i = 0; i < ordered.length; i++) {
+      const f = ordered[i].f;
+      setMergeStatus(`Combining receipts… (${i + 1} of ${ordered.length})`, true);
       try {
         if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
           const src   = await PDFLib.PDFDocument.load(await f.arrayBuffer(), { ignoreEncryption: true });
@@ -2790,6 +3044,21 @@ function mergedFileName() {
   return `VVFC-Receipts_${last}_${t}_${d}_${tok}.pdf`;
 }
 
+// Used only by the server-side merge fallback. This was referenced but never
+// defined in earlier versions, so that fallback would have thrown.
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve({
+      name: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      data: String(r.result).split(',')[1]
+    });
+    r.onerror = () => reject(new Error('could not read ' + file.name));
+    r.readAsDataURL(file);
+  });
+}
+
 function u8ToBase64(u8) {
   let s = '', chunk = 0x8000;
   for (let i = 0; i < u8.length; i += chunk) {
@@ -2826,6 +3095,7 @@ function setStep(step) {
   });
   currentStep=step;
   window.scrollTo({top:0,behavior:'smooth'});
+  if(step===3) renderUploadZones();   // rebuild for the categories now claimed
   if(step===4) buildReview();
 }
 
@@ -2855,14 +3125,59 @@ function validateStep(step) {
     if(!sel.value){ sel.classList.add('err'); shakeFirst(); return false; }
     sel.classList.remove('err');
   }
+  if(step===2) {
+    // At least one category, and every checked category needs a real amount
+    const checked = checkedExpenses();
+    if(!checked.length){
+      showExpenseError('Select at least one expense category and enter what you\'re requesting.');
+      return false;
+    }
+    const calc = recalcItems();
+    const emptyCat = checked.find(k => calc.t[k] <= 0);
+    if(emptyCat){
+      showExpenseError('Enter the amount you\'re requesting for '+EXP_LABELS[emptyCat]+
+        ', based on your receipts.');
+      const firstAmt = document.querySelector('#items-'+emptyCat+' .item-amt');
+      if(firstAmt) firstAmt.focus();
+      return false;
+    }
+    // Enforce caps at submission, not just as a warning
+    if(document.getElementById('chk-meals').checked && mealCap<9999 && calc.t.meals>mealCap){
+      showExpenseError('Your food total ('+money(calc.t.meals)+') is over the '+money(mealCap)+
+        ' cap for this trip. Lower it to continue.');
+      return false;
+    }
+    const gc=(typeof gasCap==='number'&&gasCap>0)?gasCap:100;
+    if(document.getElementById('chk-gas').checked && calc.t.gas>gc){
+      showExpenseError('Your gas total ('+money(calc.t.gas)+') is over the '+money(gc)+
+        ' cap for this tournament. Lower it to continue.');
+      return false;
+    }
+  }
   if(step===3) {
-    if(!uploadedFiles.length){
-      document.getElementById('uploadZone').style.borderColor = 'var(--red)';
-      setTimeout(()=>{ document.getElementById('uploadZone').style.borderColor=''; }, 2000);
+    // Every category the coach is claiming needs at least one receipt.
+    const missing = checkedExpenses().filter(c => !filesFor(c).length);
+    if(missing.length){
+      renderUploadZones();
+      const first = document.getElementById('cz-'+missing[0]);
+      if(first) first.scrollIntoView({behavior:'smooth', block:'center'});
       return false;
     }
   }
   return ok;
+}
+
+function showExpenseError(msg){
+  let box=document.getElementById('expErr');
+  if(!box){
+    box=document.createElement('div');
+    box.id='expErr'; box.className='note warn'; box.style.marginTop='12px';
+    const grand=document.getElementById('grandBox');
+    grand.parentNode.insertBefore(box, grand);
+  }
+  box.innerHTML='<span class="note-icon">⚠</span> '+msg;
+  box.scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(()=>{ if(box) box.remove(); }, 6000);
 }
 
 function shakeFirst() {
@@ -2877,16 +3192,30 @@ function buildReview() {
   const tDate = t ? (t.date||'—') : '—';
   const tLoc  = t ? (t.location||'—') : '—';
 
-  // Expense categories checked
+  // Itemized dollar breakdown the coach entered
   const checked = checkedExpenses();
+  const calc = recalcItems();
+  const rowsHtml = k => itemsOf(k).map(x =>
+      `<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:14px;">
+         <span style="color:var(--near-black);">${x.desc||'(no description)'}</span>
+         <span style="font-weight:600;white-space:nowrap;">${money(x.amt)}</span>
+       </div>`).join('');
+  const catBlock = (k,label) => {
+    if(!document.getElementById('chk-'+k).checked) return '';
+    return `<div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--border-soft);padding-bottom:4px;margin-bottom:5px;">
+          <span style="font-family:var(--font-c);font-size:12px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--gold-deep);">${label}</span>
+          <span style="font-weight:700;">${money(calc.t[k])}</span>
+        </div>
+        ${rowsHtml(k)}
+      </div>`;
+  };
   const expRows = checked.length
-    ? checked.map(k => `
-        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-soft);">
-          <div style="width:16px;height:16px;border-radius:3px;background:var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <div style="width:8px;height:5px;border-left:2px solid var(--black);border-bottom:2px solid var(--black);transform:rotate(-45deg) translateY(-1px);"></div>
-          </div>
-          <span style="font-size:13px;color:var(--near-black);">${EXP_LABELS[k]}</span>
-        </div>`).join('')
+    ? catBlock('hotel','Hotel')+catBlock('meals','Food')+catBlock('gas','Gas')+
+      `<div style="display:flex;justify-content:space-between;align-items:center;background:var(--black);border-radius:9px;padding:13px 16px;margin-top:8px;">
+         <span style="font-family:var(--font-c);font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);">Total Requested</span>
+         <span style="font-family:var(--font-d);font-size:22px;font-weight:600;color:#FFF;">${money(calc.grand)}</span>
+       </div>`
     : '<div style="color:var(--mid-grey);font-size:13px;padding:8px 0;">No expense categories selected</div>';
 
   const teamLabel = document.getElementById('teamPreviewText').textContent || '—';
@@ -2924,11 +3253,11 @@ function buildReview() {
         <div style="font-size:13px;color:var(--warm-grey);">${tDate} · ${tLoc}</div>
       </div>
     </div>
-    <div style="font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid-grey);margin-bottom:6px;">Expense Categories</div>
+    <div style="font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px;">Amounts You're Requesting</div>
     ${expRows}
     <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-soft);">
       <div style="font-family:var(--font-c);font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid-grey);margin-bottom:6px;">Receipts (${uploadedFiles.length} file${uploadedFiles.length!==1?'s':''})</div>
-      ${uploadedFiles.map(f=>`<div style="font-size:15px;color:var(--near-black);padding:3px 0;">${f.name} <span style="color:var(--mid-grey);font-size:13px;">(${Math.round(f.size/1024)} KB)</span></div>`).join('')}
+      ${orderedFiles().map(e=>`<div style="font-size:15px;color:var(--near-black);padding:3px 0;">${e.f.name} <span style="color:var(--mid-grey);font-size:13px;">(${Math.round(e.f.size/1024)} KB &middot; ${e.cats.map(c=>CAT_LABEL[c]).join(' + ')})</span></div>`).join('')}
       <div style="margin-top:10px;padding:11px 13px;background:var(--gold-tint);border:1px solid var(--border-gold);border-radius:8px;font-size:15px;color:var(--gold-deep);line-height:1.55;">
         ${mergedPdfBytes
           ? `<strong>Ready to send:</strong> all ${uploadedFiles.length} file${uploadedFiles.length!==1?'s':''} merged into one PDF &mdash; <strong>${mergedFileName()}</strong> (${(mergedPdfBytes.length/1048576).toFixed(2)} MB). This single PDF is what goes to the Valor Drive folder and to Beth.`
@@ -3030,6 +3359,13 @@ function startAnother() {
       const panel = document.getElementById('ep-' + k);
       if (panel) panel.classList.remove('on');
     }
+    const rows = document.getElementById('items-' + k);
+    if (rows) rows.innerHTML = '';               // clear itemized amounts
+  });
+  const gb = document.getElementById('grandBox');
+  if (gb) gb.style.display = 'none';
+  ['warn-meals','warn-gas'].forEach(id => {
+    const w = document.getElementById(id); if(w) w.classList.remove('on');
   });
 
   if (specialReqOpen) toggleSpecialReq();
@@ -3038,7 +3374,6 @@ function startAnother() {
   mergedPdfBytes = null; mergeError = '';
   if (mergedPdfUrl) { URL.revokeObjectURL(mergedPdfUrl); mergedPdfUrl = null; }
   renderFileList();
-  document.getElementById('uploadZone').style.display = '';
   setMergeStatus('', false);
   document.getElementById('pdfPreviewBtn').classList.remove('on');
 
@@ -3352,10 +3687,12 @@ async function submitForm() {
       mergedClientSide = true;
     } else {
       // Safety net only: browser couldn't merge, so the backend merges instead
-      filePayloads = await Promise.all(uploadedFiles.map(fileToBase64));
+      filePayloads = await Promise.all(orderedFiles().map(e => fileToBase64(e.f)));
       mergedClientSide = false;
     }
     const expenseList  = checkedExpenses().map(k => EXP_LABELS[k]).join(', ');
+    const calc         = recalcItems();
+    const lineItems    = { hotel: itemsOf('hotel'), meals: itemsOf('meals'), gas: itemsOf('gas') };
     const coachEmail   = document.getElementById('email').value.trim().toLowerCase();
     const tournName    = selTourn ? selTourn.name : document.getElementById('srTournName').value;
     const tournDateVal = selTourn ? (selTourn.date || '') : document.getElementById('srTournDate').value;
@@ -3375,13 +3712,18 @@ async function submitForm() {
       tripDays:            document.getElementById('tripDays').value,
       hotelRequired:       document.getElementById('hotelReq').value,
       expenses:            expenseList,
+      hotelTotal:          calc.t.hotel,
+      mealTotal:           calc.t.meals,
+      gasTotal:            calc.t.gas,
+      grandTotal:          calc.grand,
+      lineItems:           JSON.stringify(lineItems),
       notes:               document.getElementById('notes').value || '',
       specialRequest:      specialReqOpen ? buildSpecialReqSummary() : '',
       files:               filePayloads,
       mergedClientSide:    mergedClientSide,
       mergedFileName:      mergedClientSide ? filePayloads[0].name : '',
       originalFileCount:   uploadedFiles.length,
-      originalFileNames:   uploadedFiles.map(f => f.name).join(' | '),
+      originalFileNames:   orderedFiles().map(e => e.f.name + ' [' + e.cats.map(c=>CAT_LABEL[c]).join('+') + ']').join(' | '),
       sendCoachConfirmation: true
     };
 
