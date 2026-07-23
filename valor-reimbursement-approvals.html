@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reimbursement Approvals | Virginia Valor FC</title>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -142,6 +143,57 @@ textarea{min-height:88px;line-height:1.55;resize:vertical}
   .btn{flex:1 1 100%}
   .total-box-v{font-size:28px}
 }
+
+/* ─── INLINE RECEIPT VIEWER ─────────────────────────────── */
+.rc-wrap { margin-top: 14px; padding-top: 13px; border-top: 1px dashed var(--border); }
+.rc-head {
+  font-family: var(--font-c); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.11em; text-transform: uppercase; color: var(--warm-grey);
+  margin-bottom: 9px; display: flex; align-items: center; gap: 8px;
+}
+.rc-strip { display: flex; gap: 10px; flex-wrap: wrap; }
+.rc-thumb {
+  position: relative; width: 132px; border: 1.5px solid var(--border);
+  border-radius: 8px; overflow: hidden; cursor: zoom-in; background: #FFF;
+  transition: border-color .12s, transform .1s;
+}
+.rc-thumb:hover { border-color: var(--gold); transform: translateY(-1px); }
+.rc-thumb img { display: block; width: 100%; height: auto; }
+.rc-thumb-cap {
+  font-family: var(--font-c); font-size: 11px; letter-spacing: .05em;
+  color: var(--warm-grey); padding: 5px 7px; border-top: 1px solid var(--border-soft);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rc-loading, .rc-none { font-size: 13px; color: var(--warm-grey); padding: 6px 0; }
+.rc-none { color: var(--red); }
+.rc-spin {
+  display: inline-block; width: 13px; height: 13px; vertical-align: -2px;
+  border: 2px solid var(--gold-glow); border-top-color: var(--gold-deep);
+  border-radius: 50%; animation: rcspin .8s linear infinite; margin-right: 7px;
+}
+@keyframes rcspin { to { transform: rotate(360deg); } }
+
+/* Lightbox */
+.rc-box {
+  position: fixed; inset: 0; background: rgba(15,15,15,.93);
+  display: none; align-items: center; justify-content: center;
+  z-index: 200; padding: 16px; flex-direction: column; gap: 12px;
+}
+.rc-box.on { display: flex; }
+.rc-box img {
+  max-width: 100%; max-height: calc(100vh - 130px);
+  object-fit: contain; border-radius: 6px; background: #FFF;
+}
+.rc-box-bar { display: flex; align-items: center; gap: 14px; color: #E8E4DC; font-size: 14px; }
+.rc-box-btn {
+  background: transparent; border: 1.5px solid rgba(255,255,255,.3); color: #FFF;
+  border-radius: 8px; font-family: var(--font-c); font-size: 14px; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase; padding: 11px 18px;
+  min-height: 46px; cursor: pointer;
+}
+.rc-box-btn:hover { border-color: var(--gold); color: var(--gold-light); }
+@media (max-width: 900px) { .rc-thumb { width: 104px; } }
+
 </style>
 </head>
 <body>
@@ -168,6 +220,16 @@ textarea{min-height:88px;line-height:1.55;resize:vertical}
   <div class="bar" id="bar"><div class="dot"></div> Loading submissions…</div>
   <div id="queueView"></div>
   <div id="detailView" style="display:none"></div>
+</div>
+
+<div class="rc-box" id="rcBox" onclick="if(event.target===this)closeRc()">
+  <img id="rcImg" alt="Receipt">
+  <div class="rc-box-bar">
+    <button class="rc-box-btn" onclick="rcStep(-1)">Prev</button>
+    <span id="rcCap"></span>
+    <button class="rc-box-btn" onclick="rcStep(1)">Next</button>
+    <button class="rc-box-btn" onclick="closeRc()">Close</button>
+  </div>
 </div>
 
 <div class="overlay" id="confirmOverlay" onclick="if(event.target===this)closeConfirm()">
@@ -223,14 +285,15 @@ const COL_ALIASES = {
   coachFood:  ['coach food $','coach food','food total'],
   coachGas:   ['coach gas $','coach gas','gas total'],
   coachTotal: ['coach total $','coach total','total requested'],
-  lineItems:  ['line items (json)','line items','items json']
+  lineItems:  ['line items (json)','line items','items json'],
+  receiptMap: ['receipt map (json)','receipt map','(reserved)']
 };
 // True positions on the 26-column Submissions sheet.
 const COL_FALLBACK = {
   ref:0, timestamp:1, status:2, firstName:3, lastName:4, email:5,
   primaryTeam:6, secondTeam:7, tournament:8, tournDate:9, tournLoc:10,
   tripDays:11, hotelReq:12, expenses:13,
-  coachHotel:14, coachFood:15, coachGas:16, coachTotal:17, lineItems:18,
+  coachHotel:14, coachFood:15, coachGas:16, coachTotal:17, lineItems:18, receiptMap:19,
   notes:20, specialReq:21, fileCount:22, mergeNote:23, driveLink:24, bethNotes:25
 };
 let COL = Object.assign({}, COL_FALLBACK);
@@ -415,7 +478,7 @@ function openDetail(i){
         <div class="kv"><span>Date / location</span><span>${esc(r[COL.tournDate])} ${r[COL.tournLoc]?'&middot; '+esc(r[COL.tournLoc]):''}</span></div>
         <div class="kv"><span>Trip length</span><span>${esc(days)||'—'} day(s)</span></div>
         <div class="kv"><span>Hotel required</span><span>${esc(r[COL.hotelReq])||'—'}</span></div>
-        <div class="kv"><span>Claimed categories</span><span>${esc(r[COL.expenses])||'—'}</span></div>
+        <div class="kv"><span>Request categories</span><span>${esc(r[COL.expenses])||'—'}</span></div>
         <div class="kv"><span>Submitted</span><span>${fmtWhen(r[COL.timestamp])}</span></div>
         <div class="kv"><span>Status</span><span>${esc(s)}</span></div>
         ${age!==null&&age>POLICY.submitWindowDays?
@@ -436,6 +499,7 @@ function openDetail(i){
           <div id="rows-hotel"></div>
           <button class="add-li" onclick="addLine('hotel')">+ Add hotel night</button>
           <div class="sub-row"><span>Hotel subtotal</span><b id="sub-hotel">$0.00</b></div>
+          <div class="rc-wrap" id="rc-hotel"></div>
         </div>
 
         <div class="sec">
@@ -444,6 +508,7 @@ function openDetail(i){
           <button class="add-li" onclick="addLine('meals')">+ Add meal receipt</button>
           <div class="sub-row"><span>Food subtotal</span><b id="sub-meals">$0.00</b></div>
           <div class="warnbox" id="warn-meals"></div>
+          <div class="rc-wrap" id="rc-meals"></div>
         </div>
 
         <div class="sec">
@@ -452,6 +517,7 @@ function openDetail(i){
           <button class="add-li" onclick="addLine('gas')">+ Add gas receipt</button>
           <div class="sub-row"><span>Gas subtotal</span><b id="sub-gas">$0.00</b></div>
           <div class="warnbox" id="warn-gas"></div>
+          <div class="rc-wrap" id="rc-gas"></div>
         </div>
 
         <div class="total-box">
@@ -498,6 +564,10 @@ function openDetail(i){
     else { addLine(k); addLine(k); }   // blank rows if the coach entered none
   });
   recalc();
+
+  // Pull the receipt PDF and show its pages beside the amounts
+  if (rcCurrentRef !== r[COL.ref]) { rcPages = []; rcCurrentRef = r[COL.ref]; }
+  loadReceiptImages(r[COL.ref], r[COL.driveLink]);
 
   // Banner: coach's requested total vs what Beth is building
   const claimed = parseFloat(r[COL.coachTotal]) || 0;
@@ -581,6 +651,122 @@ function recalc(){
   return {t:t, grand:grand};
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════
+   INLINE RECEIPTS
+   Renders the merged receipt PDF to images once, then shows each page
+   beneath the category it belongs to — so Beth checks amounts against
+   the receipt without leaving the page.
+   ═══════════════════════════════════════════════════════════════════════ */
+let rcPages = [];       // [{page, dataUrl, cats, name}]
+let rcOpenIdx = 0;
+let rcCurrentRef = null;
+
+async function loadReceiptImages(ref, driveLink) {
+  ['hotel','meals','gas'].forEach(c => {
+    const el = document.getElementById('rc-' + c);
+    if (el) el.innerHTML = '<div class="rc-loading"><span class="rc-spin"></span>Loading receipts…</div>';
+  });
+
+  if (typeof pdfjsLib === 'undefined') return rcFallback(driveLink, 'the PDF viewer library did not load');
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL + '?action=getPdf&ref=' + encodeURIComponent(ref));
+    const got = await res.json();
+    if (!got.ok) throw new Error(got.error || 'could not fetch the receipt PDF');
+
+    const bytes = Uint8Array.from(atob(got.data), c => c.charCodeAt(0));
+    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+
+    // Which pages belong to which category
+    let map = null;
+    try { map = JSON.parse(current[COL.receiptMap] || 'null'); } catch (e) {}
+
+    rcPages = [];
+    for (let n = 1; n <= pdf.numPages; n++) {
+      const page = await pdf.getPage(n);
+      const vp = page.getViewport({ scale: 1 });
+      const scale = Math.min(1100 / vp.width, 2);
+      const v = page.getViewport({ scale: scale });
+      const cv = document.createElement('canvas');
+      cv.width = v.width; cv.height = v.height;
+      await page.render({ canvasContext: cv.getContext('2d'), viewport: v }).promise;
+
+      const entry = map ? map.find(m => n >= m.from && n <= m.to) : null;
+      rcPages.push({
+        page: n,
+        dataUrl: cv.toDataURL('image/jpeg', 0.82),
+        cats: entry ? entry.cats : null,
+        name: entry ? entry.name : ''
+      });
+    }
+    renderReceiptStrips(driveLink, !map);
+
+  } catch (e) {
+    rcFallback(driveLink, e.message);
+  }
+}
+
+function renderReceiptStrips(driveLink, noMap) {
+  ['hotel','meals','gas'].forEach(cat => {
+    const el = document.getElementById('rc-' + cat);
+    if (!el) return;
+    // Without a map (submissions predating this feature) show every page
+    // under each category rather than guessing wrong.
+    const mine = noMap ? rcPages : rcPages.filter(p => p.cats && p.cats.includes(cat));
+    if (!mine.length) {
+      el.innerHTML = '<div class="rc-none">No receipt page matched this category. ' +
+        '<a href="' + driveLink + '" target="_blank" style="color:var(--gold-deep)">Open the full PDF</a></div>';
+      return;
+    }
+    el.innerHTML =
+      '<div class="rc-head">' + (noMap ? 'All receipt pages' : CAT_LABEL_D[cat] + ' receipts') +
+      ' &middot; tap to enlarge</div><div class="rc-strip">' +
+      mine.map(p =>
+        '<div class="rc-thumb" onclick="openRc(' + rcPages.indexOf(p) + ')">' +
+          '<img src="' + p.dataUrl + '" alt="Receipt page ' + p.page + '">' +
+          '<div class="rc-thumb-cap">' + (p.name ? esc(p.name) : 'Page ' + p.page) + '</div>' +
+        '</div>').join('') +
+      '</div>';
+  });
+}
+
+function rcFallback(driveLink, why) {
+  ['hotel','meals','gas'].forEach(cat => {
+    const el = document.getElementById('rc-' + cat);
+    if (!el) return;
+    el.innerHTML = '<div class="rc-none">Could not show receipts inline (' + esc(why || 'unknown') + '). ' +
+      (driveLink ? '<a href="' + driveLink + '" target="_blank" style="color:var(--gold-deep)">Open the PDF</a>' : '') +
+      '</div>';
+  });
+}
+
+const CAT_LABEL_D = { hotel: 'Hotel', meals: 'Food', gas: 'Gas' };
+
+function openRc(i) {
+  rcOpenIdx = i;
+  const p = rcPages[i];
+  if (!p) return;
+  document.getElementById('rcImg').src = p.dataUrl;
+  document.getElementById('rcCap').textContent =
+    (p.name ? p.name + ' — ' : '') + 'page ' + p.page + ' of ' + rcPages.length;
+  document.getElementById('rcBox').classList.add('on');
+}
+function rcStep(d) {
+  const n = rcOpenIdx + d;
+  if (n >= 0 && n < rcPages.length) openRc(n);
+}
+function closeRc() { document.getElementById('rcBox').classList.remove('on'); }
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('rcBox').classList.contains('on')) return;
+  if (e.key === 'Escape') closeRc();
+  if (e.key === 'ArrowLeft') rcStep(-1);
+  if (e.key === 'ArrowRight') rcStep(1);
+});
+
 /* ─── CHECK REQUEST COVER SHEET ─────────────────────────────────────── */
 async function buildCoverSheet(d){
   const {PDFDocument,StandardFonts,rgb}=PDFLib;
@@ -618,7 +804,7 @@ async function buildCoverSheet(d){
     y-=23;
     let sub=0;
     if(!rows.length){
-      pg.drawText('None claimed',{x:53,y:y,size:10,font:R,color:grey}); y-=17;
+      pg.drawText('None requested',{x:53,y:y,size:10,font:R,color:grey}); y-=17;
     }
     rows.forEach(r=>{
       let desc=r.desc||'(no description)';
