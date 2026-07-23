@@ -1710,6 +1710,72 @@ input:focus, select:focus, textarea:focus {
 .cat-upload .upload-zone { padding: 24px 16px; min-height: 0; }
 .cat-upload .uz-icon { font-size: 30px; }
 .cat-upload .uz-text { font-size: 16px !important; }
+
+/* ─── EXPENSE CATEGORY CARDS ────────────────────────────── */
+/* Each category is its own bordered card with a dark header bar, so hotel,
+   food and gas read as three distinct blocks rather than one long form. */
+.exp-panel {
+  display: none;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 0;
+  margin-bottom: 24px;
+  overflow: hidden;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.06);
+  animation: slideDown 0.15s var(--ease) both;
+}
+.exp-panel.on { display: block; }
+.exp-panel-head {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--black);
+  padding: 15px 17px;
+  border-bottom: 3px solid var(--gold);
+}
+.exp-panel-icon {
+  width: 26px; height: 26px; flex-shrink: 0;
+  stroke: var(--gold); fill: none;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+.exp-panel-title {
+  font-family: var(--font-d); font-size: 19px; font-weight: 600;
+  letter-spacing: 0.09em; text-transform: uppercase; color: #FFF;
+}
+.exp-panel-cap {
+  margin-left: auto; text-align: right;
+  font-family: var(--font-c); font-size: 13px; font-weight: 500;
+  letter-spacing: 0.04em; color: var(--gold-light); line-height: 1.3;
+}
+.exp-panel-body { padding: 17px; }
+
+/* Subtotal reads as the category's headline number */
+.exp-panel .item-sub {
+  background: var(--gold-tint);
+  border: 1px solid var(--border-gold);
+  border-radius: 9px;
+  padding: 12px 14px;
+  margin-top: 12px;
+  border-top: 1px solid var(--border-gold);
+}
+.exp-panel .item-sub span { font-weight: 600; color: var(--ink); }
+.exp-panel .item-sub b { font-size: 21px; color: var(--black); }
+
+/* Inline SVG icons, replacing emoji */
+.ico { width: 1em; height: 1em; vertical-align: -0.13em; fill: none;
+       stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.uz-icon .ico { width: 30px; height: 30px; stroke: var(--gold-deep); stroke-width: 1.6; }
+.file-item-icon .ico { width: 19px; height: 19px; }
+.file-item-icon.pdf { color: var(--red); }
+.file-item-icon.img { color: var(--green); }
+
+@media (max-width: 700px) {
+  .exp-panel-head { padding: 13px 14px; gap: 10px; }
+  .exp-panel-title { font-size: 17px; }
+  .exp-panel-cap { font-size: 12px; }
+  .exp-panel-body { padding: 14px; }
+  .exp-panel { margin-bottom: 20px; }
+}
+
 </style>
 </head>
 <body>
@@ -2082,7 +2148,7 @@ input:focus, select:focus, textarea:focus {
 <div class="step-panel" id="panel-2">
   <div class="step-heading">
     <div class="step-eyebrow">Step 3 of 4</div>
-    <div class="step-title">What are you claiming?</div>
+    <div class="step-title">Your reimbursement request</div>
     <div class="step-sub">Check everything you have receipts for. Beth will calculate the totals from your uploaded receipts.</div>
   </div>
 
@@ -2116,41 +2182,59 @@ input:focus, select:focus, textarea:focus {
 
       <!-- HOTEL DETAIL -->
       <div class="exp-panel" id="ep-hotel">
-        <div class="exp-panel-label">Hotel</div>
+        <div class="exp-panel-head">
+          <svg class="exp-panel-icon" viewBox="0 0 24 24"><path d="M2 18v-6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v6"/><path d="M2 18h20"/><path d="M4 10V7a1 1 0 0 1 1-1h5v4"/><path d="M14 10V6h5a1 1 0 0 1 1 1v3"/><path d="M2 21v-3"/><path d="M22 21v-3"/></svg>
+          <span class="exp-panel-title">Hotel</span>
+          <span class="exp-panel-cap">Itemized folio required</span>
+        </div>
+        <div class="exp-panel-body">
         <div class="note warn"><span class="note-icon">⚠</span> Stay at the same hotel as your team, same booking platform. Standard room only — in-room charges are not reimbursable. Itemized hotel folio required.</div>
         <div class="item-rows" id="items-hotel"></div>
         <button type="button" class="item-add" onclick="addItem('hotel')">+ Add a hotel receipt</button>
-        <div class="item-sub"><span>Hotel total you're claiming</span><b id="sub-hotel">$0.00</b></div>
+        <div class="item-sub"><span>Hotel reimbursement request</span><b id="sub-hotel">$0.00</b></div>
         <div class="cat-upload" id="uz-hotel"></div>
+        </div>
       </div>
 
       <!-- MEALS DETAIL -->
       <div class="exp-panel" id="ep-meals">
-        <div class="exp-panel-label">Meals</div>
+        <div class="exp-panel-head">
+          <svg class="exp-panel-icon" viewBox="0 0 24 24"><path d="M6 3v7a2 2 0 0 0 4 0V3"/><path d="M8 10v11"/><path d="M17 3c-1.7 1.4-2.5 3.3-2.5 5.5S15.3 13 17 14v7"/></svg>
+          <span class="exp-panel-title">Food</span>
+          <span class="exp-panel-cap" id="mealsHeadCap">$45 per day</span>
+        </div>
+        <div class="exp-panel-body">
         <div class="note info"><span class="note-icon">ℹ</span> <span id="mealCapText">$45/day max. Select trip length on the previous step to confirm your cap.</span></div>
         <div class="note warn" style="margin-top:8px;"><span class="note-icon">⚠</span> No alcohol, no meals eaten locally before departure or after return. Itemized receipts required. Enter the food total only — leave out any alcohol.</div>
         <div class="item-rows" id="items-meals"></div>
         <button type="button" class="item-add" onclick="addItem('meals')">+ Add a meal receipt</button>
-        <div class="item-sub"><span>Food total you're claiming</span><b id="sub-meals">$0.00</b></div>
+        <div class="item-sub"><span>Food reimbursement request</span><b id="sub-meals">$0.00</b></div>
         <div class="item-warn" id="warn-meals"></div>
         <div class="cat-upload" id="uz-meals"></div>
+        </div>
       </div>
 
       <!-- GAS DETAIL -->
       <div class="exp-panel" id="ep-gas">
-        <div class="exp-panel-label">Gas / Personal Vehicle</div>
+        <div class="exp-panel-head">
+          <svg class="exp-panel-icon" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12"/><path d="M6 8h6"/><path d="M14 9h3a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0v-7l-3-3"/></svg>
+          <span class="exp-panel-title">Gas</span>
+          <span class="exp-panel-cap" id="gasHeadCap">Personal vehicle</span>
+        </div>
+        <div class="exp-panel-body">
         <div class="note ok" id="gasCapNote"><span class="note-icon">✓</span> <span id="gasCapText">Gas cap auto-loaded from your tournament selection.</span></div>
         <div class="note warn" style="margin-top:8px;"><span class="note-icon">⚠</span> Never transport players in your personal vehicle.</div>
         <div class="note warn" style="margin-top:8px;"><span class="note-icon">⚠</span> Tolls are <strong>not</strong> reimbursable. Do not include toll receipts — they will be excluded from your request.</div>
         <div class="item-rows" id="items-gas"></div>
         <button type="button" class="item-add" onclick="addItem('gas')">+ Add a gas receipt</button>
-        <div class="item-sub"><span>Gas total you're claiming</span><b id="sub-gas">$0.00</b></div>
+        <div class="item-sub"><span>Gas reimbursement request</span><b id="sub-gas">$0.00</b></div>
         <div class="item-warn" id="warn-gas"></div>
         <div class="cat-upload" id="uz-gas"></div>
+        </div>
       </div>
 
       <div class="grand-box" id="grandBox" style="display:none;">
-        <div class="grand-box-l">Total you're requesting</div>
+        <div class="grand-box-l">Total reimbursement request</div>
         <div class="grand-box-v" id="grandTotal">$0.00</div>
       </div>
 
@@ -2868,7 +2952,7 @@ function renderUploadZones() {
       return '<div style="margin-bottom:10px;">' +
         '<div class="file-item">' +
           '<div class="file-item-icon ' + (isPdf ? 'pdf' : 'img') + '">' +
-            (isPdf ? '\ud83d\udcc4' : '\ud83d\uddbc\ufe0f') + '</div>' +
+            (isPdf ? '<svg class=\"ico\" viewBox=\"0 0 24 24\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><path d=\"M14 2v6h6\"/><path d=\"M8 13h8\"/><path d=\"M8 17h5\"/></svg>' : '<svg class=\"ico\" viewBox=\"0 0 24 24\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/><circle cx=\"8.5\" cy=\"8.5\" r=\"1.5\"/><path d=\"m21 15-5-5L5 21\"/></svg>') + '</div>' +
           '<span class="file-item-name">' + e.f.name + '</span>' +
           '<span class="file-item-size">' + fmtSize(e.f.size) + '</span>' +
           '<button class="file-item-remove" onclick="removeFile(' + idx + ')" title="Remove">\u2715</button>' +
@@ -2881,7 +2965,7 @@ function renderUploadZones() {
       ? '<button class="file-add-more" onclick="' + picker + '">+ Attach another ' +
         CAT_LABEL[cat].toLowerCase() + ' receipt</button>'
       : '<div class="upload-zone" onclick="' + picker + '">' +
-          '<div class="uz-icon">\ud83d\udcce</div>' +
+          '<div class="uz-icon"><svg class=\"ico\" viewBox=\"0 0 24 24\"><path d=\"M21 10.5 12.5 19a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7.5-7.5\"/></svg></div>' +
           '<div class="uz-text"><strong>Attach your ' + CAT_LABEL[cat].toLowerCase() +
             ' receipt' + (cat === 'hotel' ? ' or folio' : '') + '</strong></div>' +
           '<div class="uz-sub">Photo, screenshot, or PDF</div>' +
@@ -2911,6 +2995,9 @@ function renderFileList() { renderUploadZones(); }
 // ═══════════════════════════════════════════════════════════════════════════
 
 let mergedPdfBytes = null;   // Uint8Array of the combined PDF
+// Maps merged-PDF pages back to their expense category, so Beth's dashboard
+// can show each receipt beside the amounts it belongs to.
+let receiptMap = [];
 let mergedPdfUrl   = null;   // object URL for preview
 let mergeError     = '';
 
@@ -2973,8 +3060,10 @@ async function buildMergedPdf() {
     // Grouped in check-request order (hotel, food, gas) so the receipts line
     // up with the amounts on the cover sheet.
     const ordered = orderedFiles();
+    receiptMap = [];   // [{cats:[...], name, from, to}] — 1-based page numbers
     for (let i = 0; i < ordered.length; i++) {
       const f = ordered[i].f;
+      const pageFrom = out.getPageCount() + 1;
       setMergeStatus(`Combining receipts… (${i + 1} of ${ordered.length})`, true);
       try {
         if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
@@ -2993,6 +3082,10 @@ async function buildMergedPdf() {
         }
       } catch (e) {
         skipped.push(f.name);
+      }
+      const pageTo = out.getPageCount();
+      if (pageTo >= pageFrom) {
+        receiptMap.push({ cats: ordered[i].cats.slice(), name: f.name, from: pageFrom, to: pageTo });
       }
     }
 
@@ -3118,13 +3211,13 @@ function validateStep(step) {
     // At least one category, and every checked category needs a real amount
     const checked = checkedExpenses();
     if(!checked.length){
-      showExpenseError('Select at least one expense category and enter what you\'re requesting.');
+      showExpenseError('Select at least one expense category and enter your reimbursement request amounts.');
       return false;
     }
     const calc = recalcItems();
     const emptyCat = checked.find(k => calc.t[k] <= 0);
     if(emptyCat){
-      showExpenseError('Enter the amount you\'re requesting for '+EXP_LABELS[emptyCat]+
+      showExpenseError('Enter your reimbursement request amount for '+EXP_LABELS[emptyCat]+
         ', based on your receipts.');
       const firstAmt = document.querySelector('#items-'+emptyCat+' .item-amt');
       if(firstAmt) firstAmt.focus();
@@ -3147,7 +3240,7 @@ function validateStep(step) {
     if(noReceipt.length){
       renderUploadZones();
       showExpenseError('Attach your '+CAT_LABEL[noReceipt[0]].toLowerCase()+
-        ' receipt before continuing — an itemized receipt is required for every expense you claim.');
+        ' receipt before continuing — an itemized receipt is required for every expense in your reimbursement request.');
       const z = document.getElementById('uz-'+noReceipt[0]);
       if(z) z.scrollIntoView({behavior:'smooth', block:'center'});
       return false;
@@ -3203,7 +3296,7 @@ function buildReview() {
   const expRows = checked.length
     ? catBlock('hotel','Hotel')+catBlock('meals','Food')+catBlock('gas','Gas')+
       `<div style="display:flex;justify-content:space-between;align-items:center;background:var(--black);border-radius:9px;padding:13px 16px;margin-top:8px;">
-         <span style="font-family:var(--font-c);font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);">Total Requested</span>
+         <span style="font-family:var(--font-c);font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);">Total Reimbursement Request</span>
          <span style="font-family:var(--font-d);font-size:22px;font-weight:600;color:#FFF;">${money(calc.grand)}</span>
        </div>`
     : '<div style="color:var(--mid-grey);font-size:13px;padding:8px 0;">No expense categories selected</div>';
@@ -3243,7 +3336,7 @@ function buildReview() {
         <div style="font-size:13px;color:var(--warm-grey);">${tDate} · ${tLoc}</div>
       </div>
     </div>
-    <div style="font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px;">Amounts You're Requesting</div>
+    <div style="font-family:var(--font-c);font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px;">Your Reimbursement Request</div>
     ${expRows}
     <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-soft);">
       <div style="font-family:var(--font-c);font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid-grey);margin-bottom:6px;">Receipts (${uploadedFiles.length} file${uploadedFiles.length!==1?'s':''})</div>
@@ -3707,6 +3800,7 @@ async function submitForm() {
       gasTotal:            calc.t.gas,
       grandTotal:          calc.grand,
       lineItems:           JSON.stringify(lineItems),
+      receiptMap:          JSON.stringify(receiptMap),
       notes:               document.getElementById('notes').value || '',
       specialRequest:      specialReqOpen ? buildSpecialReqSummary() : '',
       files:               filePayloads,
