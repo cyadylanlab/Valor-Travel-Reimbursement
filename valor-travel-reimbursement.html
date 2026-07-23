@@ -3117,14 +3117,19 @@ function previewMergedPdf() {
   window.open(mergedPdfUrl, '_blank');
 }
 
+// Drive filenames lead with the coach's name (last, then first) so files
+// group and search by coach.
 function mergedFileName() {
-  const last = (document.getElementById('lastName').value || 'Coach').replace(/[^A-Za-z0-9]/g, '');
-  const t    = (selTourn ? selTourn.name : (document.getElementById('srTournName').value || 'Tournament'))
-                 .replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const d    = new Date().toISOString().slice(0, 10);
-  // Short token keeps two same-day submissions from colliding in Drive
-  const tok  = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `VVFC-Receipts_${last}_${t}_${d}_${tok}.pdf`;
+  const clean = s => (s || '').replace(/[^A-Za-z0-9]/g, '');
+  const last  = clean(document.getElementById('lastName').value) || 'Coach';
+  const first = clean(document.getElementById('firstName').value);
+  const who   = first ? `${last}_${first}` : last;
+  const t     = (selTourn ? selTourn.name : (document.getElementById('srTournName').value || 'Tournament'))
+                  .replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const d     = new Date().toISOString().slice(0, 10);
+  // Short token keeps two same-day submissions from colliding
+  const tok   = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `${who} - Receipts - ${t} - ${d} - ${tok}.pdf`;
 }
 
 // Used only by the server-side merge fallback. This was referenced but never
