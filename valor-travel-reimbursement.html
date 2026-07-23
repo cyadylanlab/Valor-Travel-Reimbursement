@@ -2111,7 +2111,7 @@ input:focus, select:focus, textarea:focus {
         <div class="exp-panel-label">Hotel</div>
         <div class="note warn"><span class="note-icon">⚠</span> Stay at the same hotel as your team, same booking platform. Standard room only — in-room charges are not reimbursable. Itemized hotel folio required.</div>
         <div class="item-rows" id="items-hotel"></div>
-        <button type="button" class="item-add" onclick="addItem('hotel')">+ Add a hotel charge</button>
+        <button type="button" class="item-add" onclick="addItem('hotel')">+ Add a hotel receipt</button>
         <div class="item-sub"><span>Hotel total you're claiming</span><b id="sub-hotel">$0.00</b></div>
       </div>
 
@@ -2681,7 +2681,7 @@ function toggleExp(type, card) {
 // ─── COACH ITEMIZED ENTRY ────────────────────────────────────────────────────
 let itemSeq = 0;
 const ITEM_PLACEHOLDER = {
-  hotel: 'e.g. Hampton Inn Richmond — night of 3/6',
+  hotel: 'e.g. Hampton Inn Richmond — folio, night of 3/6',
   meals: 'e.g. Sat 3/7 breakfast + dinner (food only)',
   gas:   'e.g. Shell — Ashland, VA'
 };
