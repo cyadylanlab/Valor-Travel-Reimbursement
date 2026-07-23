@@ -1697,6 +1697,19 @@ input:focus, select:focus, textarea:focus {
 .cat-chip:hover { border-color: var(--gold); color: var(--gold-deep); }
 .cat-chip.on { background: var(--gold); border-color: var(--gold); color: var(--black); }
 
+
+/* ─── RECEIPT UPLOAD INSIDE EACH EXPENSE PANEL ──────────── */
+.cat-upload { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border); }
+.cat-upload:empty { display: none; }
+.cat-upload-head {
+  font-family: var(--font-c); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.11em; text-transform: uppercase; color: var(--warm-grey);
+  margin-bottom: 10px;
+}
+.cat-upload.missing .cat-upload-head { color: var(--red); }
+.cat-upload .upload-zone { padding: 24px 16px; min-height: 0; }
+.cat-upload .uz-icon { font-size: 30px; }
+.cat-upload .uz-text { font-size: 16px !important; }
 </style>
 </head>
 <body>
@@ -1739,11 +1752,6 @@ input:focus, select:focus, textarea:focus {
   <div class="step-connector"></div>
   <div class="step-item" id="rail-3" onclick="goTo(3)">
     <div class="step-dot" id="dot-3">4</div>
-    <div class="step-label">Receipts</div>
-  </div>
-  <div class="step-connector"></div>
-  <div class="step-item" id="rail-4" onclick="goTo(4)">
-    <div class="step-dot" id="dot-4">5</div>
     <div class="step-label">Review</div>
   </div>
 </nav>
@@ -1754,7 +1762,7 @@ input:focus, select:focus, textarea:focus {
 <!-- ══ STEP 1: COACH INFO ══════════════════════════════════ -->
 <div class="step-panel active" id="panel-0">
   <div class="step-heading">
-    <div class="step-eyebrow">Step 1 of 5</div>
+    <div class="step-eyebrow">Step 1 of 4</div>
     <div class="step-title">Coach Info</div>
     <div class="step-sub">Tell us who you are and which team(s) you're submitting for.</div>
   </div>
@@ -1926,7 +1934,7 @@ input:focus, select:focus, textarea:focus {
 <!-- ══ STEP 2: TOURNAMENT ══════════════════════════════════ -->
 <div class="step-panel" id="panel-1">
   <div class="step-heading">
-    <div class="step-eyebrow">Step 2 of 5</div>
+    <div class="step-eyebrow">Step 2 of 4</div>
     <div class="step-title">Which tournament?</div>
     <div class="step-sub">Only tournaments approved for reimbursement appear below.</div>
   </div>
@@ -2073,7 +2081,7 @@ input:focus, select:focus, textarea:focus {
 <!-- ══ STEP 3: EXPENSES ════════════════════════════════════ -->
 <div class="step-panel" id="panel-2">
   <div class="step-heading">
-    <div class="step-eyebrow">Step 3 of 5</div>
+    <div class="step-eyebrow">Step 3 of 4</div>
     <div class="step-title">What are you claiming?</div>
     <div class="step-sub">Check everything you have receipts for. Beth will calculate the totals from your uploaded receipts.</div>
   </div>
@@ -2113,6 +2121,7 @@ input:focus, select:focus, textarea:focus {
         <div class="item-rows" id="items-hotel"></div>
         <button type="button" class="item-add" onclick="addItem('hotel')">+ Add a hotel receipt</button>
         <div class="item-sub"><span>Hotel total you're claiming</span><b id="sub-hotel">$0.00</b></div>
+        <div class="cat-upload" id="uz-hotel"></div>
       </div>
 
       <!-- MEALS DETAIL -->
@@ -2124,6 +2133,7 @@ input:focus, select:focus, textarea:focus {
         <button type="button" class="item-add" onclick="addItem('meals')">+ Add a meal receipt</button>
         <div class="item-sub"><span>Food total you're claiming</span><b id="sub-meals">$0.00</b></div>
         <div class="item-warn" id="warn-meals"></div>
+        <div class="cat-upload" id="uz-meals"></div>
       </div>
 
       <!-- GAS DETAIL -->
@@ -2136,11 +2146,31 @@ input:focus, select:focus, textarea:focus {
         <button type="button" class="item-add" onclick="addItem('gas')">+ Add a gas receipt</button>
         <div class="item-sub"><span>Gas total you're claiming</span><b id="sub-gas">$0.00</b></div>
         <div class="item-warn" id="warn-gas"></div>
+        <div class="cat-upload" id="uz-gas"></div>
       </div>
 
       <div class="grand-box" id="grandBox" style="display:none;">
         <div class="grand-box-l">Total you're requesting</div>
         <div class="grand-box-v" id="grandTotal">$0.00</div>
+      </div>
+
+      <div class="merge-status" id="mergeStatus">
+        <div class="merge-spin"></div>
+        <span id="mergeStatusText">Combining your receipts into one PDF…</span>
+      </div>
+
+      <button class="pdf-preview-btn" id="pdfPreviewBtn" onclick="previewMergedPdf()">
+        Preview the combined PDF
+      </button>
+
+      <div class="note ok" style="margin-top:12px;">
+        <span class="note-icon">✓</span>
+        Your receipts are merged into <strong>one single PDF</strong> before anything is sent, and that one PDF is what lands in the Valor Google Drive reimbursement folder. Beth never receives loose files.
+      </div>
+
+      <div class="note info" style="margin-top:8px;">
+        <span class="note-icon">ℹ</span>
+        iPhone users: if a photo will not upload, it is likely in HEIC format. Go to Settings → Camera → Formats → Most Compatible, or take a screenshot of the photo and upload that instead.
       </div>
 
       <div class="divider"></div>
@@ -2154,53 +2184,14 @@ input:focus, select:focus, textarea:focus {
 
   <div class="nav-row">
     <button class="btn-back" onclick="goTo(1)">← Back</button>
-    <button class="btn-next" onclick="next(2)">Upload Receipts <span>→</span></button>
+    <button class="btn-next" onclick="next(2)">Review &amp; Submit <span>→</span></button>
   </div>
 </div>
 
-<!-- ══ STEP 4: RECEIPTS ════════════════════════════════════ -->
+<!-- ══ STEP 4: REVIEW ══════════════════════════════════════ -->
 <div class="step-panel" id="panel-3">
   <div class="step-heading">
-    <div class="step-eyebrow">Step 4 of 5</div>
-    <div class="step-title">Upload your receipts</div>
-    <div class="step-sub">Add the receipts for each expense you're claiming. Photos, screenshots, or PDFs — any mix is fine. We'll combine them into one PDF for Beth, grouped in the same order as your amounts.</div>
-  </div>
-
-  <div class="card">
-    <div class="card-inner">
-      <div id="uploadZones"></div>
-
-      <div class="merge-status" id="mergeStatus">
-        <div class="merge-spin"></div>
-        <span id="mergeStatusText">Combining your receipts into one PDF…</span>
-      </div>
-
-      <button class="pdf-preview-btn" id="pdfPreviewBtn" onclick="previewMergedPdf()">
-        Preview the combined PDF
-      </button>
-
-      <div class="note ok" style="margin-top:12px;">
-        <span class="note-icon">✓</span>
-        Everything you add here is merged into <strong>one single PDF</strong> before it is sent, and that one PDF is what lands in the Valor Google Drive reimbursement folder. Beth never receives loose files.
-      </div>
-
-      <div class="note info" style="margin-top:8px;">
-        <span class="note-icon">ℹ</span>
-        iPhone users: if a photo will not upload, it is likely in HEIC format. Go to Settings → Camera → Formats → Most Compatible, or take a screenshot of the photo and upload that instead.
-      </div>
-    </div>
-  </div>
-
-  <div class="nav-row">
-    <button class="btn-back" onclick="goTo(2)">← Back</button>
-    <button class="btn-next" onclick="next(3)">Review & Submit <span>→</span></button>
-  </div>
-</div>
-
-<!-- ══ STEP 5: REVIEW ══════════════════════════════════════ -->
-<div class="step-panel" id="panel-4">
-  <div class="step-heading">
-    <div class="step-eyebrow">Step 5 of 5</div>
+    <div class="step-eyebrow">Step 4 of 4</div>
     <div class="step-title">Review your request</div>
     <div class="step-sub">Double-check everything before you send it to Beth. No supplemental receipts can be added to <em>this trip</em> after you submit &mdash; but you can submit a separate request for every other tournament you travel to.</div>
   </div>
@@ -2225,7 +2216,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div class="nav-row">
-    <button class="btn-back" onclick="goTo(3)">← Back</button>
+    <button class="btn-back" onclick="goTo(2)">← Back</button>
     <button class="btn-submit-final" id="submitBtn" disabled onclick="submitForm()">Send to Beth Morris</button>
   </div>
   <p class="submit-note">Sent to <a href="mailto:bmorris@virginiavalorfc.org">bmorris@virginiavalorfc.org</a> for review and approval</p>
@@ -2676,6 +2667,7 @@ function toggleExp(type, card) {
     document.getElementById('items-'+type).innerHTML = '';  // clear so it's not counted
   }
   recalcItems();
+  renderUploadZones();
 }
 
 // ─── COACH ITEMIZED ENTRY ────────────────────────────────────────────────────
@@ -2846,25 +2838,24 @@ function fmtSize(bytes) {
   return kb > 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb + ' KB';
 }
 
-// One upload zone per claimed expense category.
+// Receipt upload lives inside each expense category's panel, right under the
+// amounts for that category — so a coach enters what they spent and attaches
+// the proof in one place.
 function renderUploadZones() {
-  const wrap = document.getElementById('uploadZones');
-  if (!wrap) return;
   const claimed = checkedExpenses();
 
   // Drop tags for categories since unchecked; drop files left covering nothing.
   uploadedFiles.forEach(e => { e.cats = e.cats.filter(c => claimed.includes(c)); });
   uploadedFiles = uploadedFiles.filter(e => e.cats.length);
 
-  if (!claimed.length) {
-    wrap.innerHTML = '<div class="note warn"><span class="note-icon">\u26a0</span> ' +
-      'Go back a step and choose what you are claiming first.</div>';
-    return;
-  }
+  CAT_ORDER.forEach(cat => {
+    const wrap = document.getElementById('uz-' + cat);
+    if (!wrap) return;
+    if (!claimed.includes(cat)) { wrap.innerHTML = ''; return; }
 
-  wrap.innerHTML = claimed.map(cat => {
     const mine = filesFor(cat);
     const others = claimed.filter(c => c !== cat);
+
     const rows = mine.map(e => {
       const idx = uploadedFiles.indexOf(e);
       const isPdf = e.f.type === 'application/pdf' || /\.pdf$/i.test(e.f.name);
@@ -2876,7 +2867,8 @@ function renderUploadZones() {
         '</div>' : '';
       return '<div style="margin-bottom:10px;">' +
         '<div class="file-item">' +
-          '<div class="file-item-icon ' + (isPdf ? 'pdf' : 'img') + '">' + (isPdf ? '\ud83d\udcc4' : '\ud83d\uddbc\ufe0f') + '</div>' +
+          '<div class="file-item-icon ' + (isPdf ? 'pdf' : 'img') + '">' +
+            (isPdf ? '\ud83d\udcc4' : '\ud83d\uddbc\ufe0f') + '</div>' +
           '<span class="file-item-name">' + e.f.name + '</span>' +
           '<span class="file-item-size">' + fmtSize(e.f.size) + '</span>' +
           '<button class="file-item-remove" onclick="removeFile(' + idx + ')" title="Remove">\u2715</button>' +
@@ -2886,28 +2878,25 @@ function renderUploadZones() {
 
     const picker = "document.getElementById('rf-" + cat + "').click()";
     const zone = mine.length
-      ? '<button class="file-add-more" onclick="' + picker + '">+ Add another ' +
+      ? '<button class="file-add-more" onclick="' + picker + '">+ Attach another ' +
         CAT_LABEL[cat].toLowerCase() + ' receipt</button>'
       : '<div class="upload-zone" onclick="' + picker + '">' +
           '<div class="uz-icon">\ud83d\udcce</div>' +
-          '<div class="uz-text"><strong>Add your ' + CAT_LABEL[cat].toLowerCase() +
+          '<div class="uz-text"><strong>Attach your ' + CAT_LABEL[cat].toLowerCase() +
             ' receipt' + (cat === 'hotel' ? ' or folio' : '') + '</strong></div>' +
           '<div class="uz-sub">Photo, screenshot, or PDF</div>' +
         '</div>';
 
-    const claimedAmt = money(itemsOf(cat).reduce((s, x) => s + x.amt, 0));
-
-    return '<div class="cat-zone ' + (mine.length ? '' : 'missing') + '" id="cz-' + cat + '">' +
-      '<div class="cat-zone-head"><span>' + CAT_LABEL[cat] + ' receipts</span>' +
-      '<span class="cat-zone-amt">' + claimedAmt + ' claimed</span></div>' +
+    wrap.className = 'cat-upload' + (mine.length ? '' : ' missing');
+    wrap.innerHTML =
+      '<div class="cat-upload-head">' + CAT_LABEL[cat] + ' receipts</div>' +
       '<input type="file" id="rf-' + cat + '" style="display:none" ' +
         'accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,application/pdf" ' +
         'multiple onchange="onFileSelect(this,\'' + cat + '\')">' +
       rows + zone +
       (mine.length ? '' : '<div class="cat-need">An itemized ' + CAT_LABEL[cat].toLowerCase() +
-        ' receipt is required before you can continue.</div>') +
-    '</div>';
-  }).join('');
+        ' receipt is required before you can continue.</div>');
+  });
 }
 
 // Kept for existing call sites (e.g. startAnother)
@@ -3095,8 +3084,8 @@ function setStep(step) {
   });
   currentStep=step;
   window.scrollTo({top:0,behavior:'smooth'});
-  if(step===3) renderUploadZones();   // rebuild for the categories now claimed
-  if(step===4) buildReview();
+  if(step===2) renderUploadZones();   // rebuild for the categories now claimed
+  if(step===3) buildReview();
 }
 
 function next(fromStep) {
@@ -3153,17 +3142,18 @@ function validateStep(step) {
         ' cap for this tournament. Lower it to continue.');
       return false;
     }
-  }
-  if(step===3) {
-    // Every category the coach is claiming needs at least one receipt.
-    const missing = checkedExpenses().filter(c => !filesFor(c).length);
-    if(missing.length){
+    // Each claimed category also needs at least one receipt attached
+    const noReceipt = checked.filter(c => !filesFor(c).length);
+    if(noReceipt.length){
       renderUploadZones();
-      const first = document.getElementById('cz-'+missing[0]);
-      if(first) first.scrollIntoView({behavior:'smooth', block:'center'});
+      showExpenseError('Attach your '+CAT_LABEL[noReceipt[0]].toLowerCase()+
+        ' receipt before continuing — an itemized receipt is required for every expense you claim.');
+      const z = document.getElementById('uz-'+noReceipt[0]);
+      if(z) z.scrollIntoView({behavior:'smooth', block:'center'});
       return false;
     }
   }
+
   return ok;
 }
 
