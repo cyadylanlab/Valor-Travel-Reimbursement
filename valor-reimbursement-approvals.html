@@ -111,6 +111,10 @@ textarea{min-height:88px;line-height:1.55;resize:vertical}
 .btn-revise{background:transparent;border:1.5px solid var(--gold);color:var(--gold-deep)}
 .btn-revise:hover:not(:disabled){background:var(--gold-tint)}
 .btn-deny{background:transparent;border:1.5px solid var(--border);color:var(--warm-grey)}
+.btn-delete{background:transparent;border:1.5px solid rgba(139,32,32,.35);color:var(--red);font-size:13px;min-height:46px;padding:12px 18px;flex:0 0 auto}
+.btn-delete:hover:not(:disabled){background:var(--red-tint);border-color:var(--red)}
+.danger-zone{margin-top:22px;padding-top:16px;border-top:1px dashed var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.danger-zone-txt{font-size:13px;color:var(--warm-grey);line-height:1.5;flex:1;min-width:180px}
 .btn-deny:hover:not(:disabled){border-color:var(--red);color:var(--red);background:var(--red-tint)}
 .btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--warm-grey);flex:0 0 auto;min-width:0}
 
@@ -214,13 +218,20 @@ const COL_ALIASES = {
   fileCount:  ['files received','files','file count','receipts'],
   mergeNote:  ['skipped files','merge note','merge','receipt note','pages'],
   driveLink:  ['drive link','link','receipt link','pdf','drive','receipt pdf'],
-  bethNotes:  ['beth notes','approver notes','admin notes','review notes']
+  bethNotes:  ['beth notes','approver notes','admin notes','review notes'],
+  coachHotel: ['coach hotel $','coach hotel','hotel total'],
+  coachFood:  ['coach food $','coach food','food total'],
+  coachGas:   ['coach gas $','coach gas','gas total'],
+  coachTotal: ['coach total $','coach total','total requested'],
+  lineItems:  ['line items (json)','line items','items json']
 };
+// True positions on the 26-column Submissions sheet.
 const COL_FALLBACK = {
   ref:0, timestamp:1, status:2, firstName:3, lastName:4, email:5,
   primaryTeam:6, secondTeam:7, tournament:8, tournDate:9, tournLoc:10,
-  tripDays:11, hotelReq:12, expenses:13, notes:14, specialReq:15,
-  fileCount:16, mergeNote:17, driveLink:18, bethNotes:19
+  tripDays:11, hotelReq:12, expenses:13,
+  coachHotel:14, coachFood:15, coachGas:16, coachTotal:17, lineItems:18,
+  notes:20, specialReq:21, fileCount:22, mergeNote:23, driveLink:24, bethNotes:25
 };
 let COL = Object.assign({}, COL_FALLBACK);
 let COL_UNMATCHED = [];
@@ -466,23 +477,55 @@ function openDetail(i){
         </div>
 
         <div class="status-msg" id="actionMsg"></div>
+
+        <div class="danger-zone">
+          <div class="danger-zone-txt">
+            Submitted in error, or a test entry? Deleting removes it from the queue
+            and moves its receipt PDF to Drive's trash.
+          </div>
+          <button class="btn btn-delete" onclick="askDelete()">Delete Submission</button>
+        </div>
       </div>
     </div>
   </div>`;
 
-  ['hotel','meals','gas'].forEach(k=>{ addLine(k); addLine(k); });
+  // Pre-fill with the amounts the coach entered at submission.
+  let coachItems = null;
+  try { coachItems = JSON.parse(r[COL.lineItems] || 'null'); } catch(e){}
+  ['hotel','meals','gas'].forEach(k=>{
+    const list = coachItems && coachItems[k] && coachItems[k].length ? coachItems[k] : null;
+    if(list){ list.forEach(it => addLine(k, it.desc, it.amt)); }
+    else { addLine(k); addLine(k); }   // blank rows if the coach entered none
+  });
   recalc();
+
+  // Banner: coach's requested total vs what Beth is building
+  const claimed = parseFloat(r[COL.coachTotal]) || 0;
+  if(claimed > 0){
+    const note = document.createElement('div');
+    note.id = 'coachClaim';
+    note.style.cssText = 'background:var(--gold-tint);border:1px solid var(--border-gold);'+
+      'border-radius:9px;padding:11px 14px;margin-bottom:16px;font-size:14px;color:var(--gold-deep);';
+    note.innerHTML = 'Coach requested <strong>'+money(claimed)+'</strong> '+
+      '(hotel '+money(parseFloat(r[COL.coachHotel])||0)+', food '+money(parseFloat(r[COL.coachFood])||0)+
+      ', gas '+money(parseFloat(r[COL.coachGas])||0)+'). '+
+      'These amounts are pre-filled below &mdash; verify against the receipts and adjust if needed.';
+    const secWrap = document.querySelector('#detailView .panel-b .sec');
+    if(secWrap) secWrap.parentNode.insertBefore(note, secWrap);
+  }
 }
 
-function addLine(kind){
+function addLine(kind, desc, amt){
   const id=++lineIds;
   const ph={hotel:'e.g. Hampton Inn Richmond — night of 3/6',
             meals:'e.g. Sat 3/7 breakfast + dinner',
             gas:'e.g. Shell — Ashland, VA'}[kind];
+  const dv = desc ? String(desc).replace(/"/g,'&quot;') : '';
+  const av = (amt!==undefined && amt!==null && amt!=='') ? Number(amt).toFixed(2) : '';
   const d=document.createElement('div');
   d.className='li'; d.id='li-'+id;
-  d.innerHTML=`<input type="text" placeholder="${ph}" data-k="${kind}" data-t="desc">
-    <input type="number" step="0.01" min="0" placeholder="0.00" data-k="${kind}" data-t="amt" oninput="recalc()">
+  d.innerHTML=`<input type="text" placeholder="${ph}" value="${dv}" data-k="${kind}" data-t="desc">
+    <input type="number" step="0.01" min="0" placeholder="0.00" value="${av}" data-k="${kind}" data-t="amt" oninput="recalc()">
     <button class="li-rm" onclick="document.getElementById('li-${id}').remove();recalc()" title="Remove">&times;</button>`;
   document.getElementById('rows-'+kind).appendChild(d);
 }
@@ -711,6 +754,7 @@ function show(el,cls,html){el.className='status-msg on '+cls;el.innerHTML=html;}
 let pendingAction=null;
 function askRevision(){
   pendingAction='revision';
+  resetConfirmBtn();
   document.getElementById('confirmTitle').textContent='Request a Revision';
   document.getElementById('confirmMsg').textContent=
     'The coach will be emailed and can resubmit against this same reference. Nothing is filed for accounting.';
@@ -723,6 +767,7 @@ function askRevision(){
 }
 function askDeny(){
   pendingAction='deny';
+  resetConfirmBtn();
   document.getElementById('confirmTitle').textContent='Deny This Request';
   document.getElementById('confirmMsg').textContent=
     'The coach will be emailed with your reason. This closes the request.';
@@ -733,6 +778,49 @@ function askDeny(){
   document.getElementById('confirmGo').onclick=()=>doSimple('Denied');
   document.getElementById('confirmOverlay').classList.add('on');
 }
+function resetConfirmBtn(){
+  const go=document.getElementById('confirmGo');
+  go.className='btn btn-approve'; go.style.borderColor=''; go.style.color='';
+  document.getElementById('confirmReasonWrap').style.display='';
+}
+
+function askDelete(){
+  document.getElementById('confirmTitle').textContent='Delete This Submission';
+  document.getElementById('confirmMsg').innerHTML=
+    'This permanently removes <strong>'+esc(current[COL.ref])+'</strong> ('+
+    esc(current[COL.firstName])+' '+esc(current[COL.lastName])+
+    ') from the queue. The receipt PDF moves to Drive\'s trash, where it stays '+
+    'recoverable for 30 days. The coach is not notified.';
+  document.getElementById('confirmReasonWrap').style.display='none';
+  const go=document.getElementById('confirmGo');
+  go.textContent='Delete Permanently';
+  go.className='btn btn-deny';
+  go.style.borderColor='var(--red)'; go.style.color='var(--red)';
+  go.onclick=doDelete;
+  document.getElementById('confirmOverlay').classList.add('on');
+}
+
+async function doDelete(){
+  const go=document.getElementById('confirmGo');
+  go.disabled=true; go.textContent='Deleting…';
+  try{
+    const res=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+      action:'delete', ref:current[COL.ref]
+    })});
+    const out=await res.json();
+    if(!out.ok) throw new Error(out.error||'delete failed');
+    closeConfirm();
+    renderQueue();
+    loadQueue(true);
+  }catch(e){
+    alert('Could not delete: '+e.message+
+      '\n\nIf this says "unknown action", the Apps Script needs redeploying.');
+  }finally{
+    go.disabled=false;
+    go.className='btn btn-approve'; go.style.borderColor=''; go.style.color='';
+  }
+}
+
 function closeConfirm(){document.getElementById('confirmOverlay').classList.remove('on');}
 
 async function doSimple(status){
